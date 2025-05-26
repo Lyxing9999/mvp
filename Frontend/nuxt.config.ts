@@ -2,11 +2,12 @@
 import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   modules: ["@element-plus/nuxt"],
+  devtools: false,
   css: ["@/styles/css/main.css"],
   vite: {
     plugins: [tailwindcss()],
     define: {
-      __DEV__: false,
+      __DEV__: true,
     },
   },
 });

@@ -1,11 +1,13 @@
 from flask import request, jsonify  # type: ignore
 from . import student_bp
-from app.models.student import Student
-from app.models.user import User
+from app.models.student_model import Student
 from bson.objectid import ObjectId # type: ignore
+from app.utils.convert import convert_objectid_to_str
+import json
 
 @student_bp.route('/create', methods=['POST'])
 def create_student():
+    
     try:
         if not request.is_json:
             return jsonify({
@@ -36,42 +38,18 @@ def create_student():
         }), 500
     
     
-@student_bp.route('/', methods=['GET'])
-def get_students():
+        
+@student_bp.route('/<user_id>', methods=['GET'])
+def get_student_by_user_id(user_id):
     try:
-        students = Student.find_all_user()
-        students_dicts = [student.to_dict() for student in students]
-        
-        if students_dicts:
-            return jsonify({
-                "message": "Students retrieved successfully",
-                "success": True,
-                "data": students_dicts
-            }), 200
-        
-        return jsonify({
-            "message": "No students found",
-            "success": False
-        }), 404
-
-    except Exception as e:
-        print(f"Error in get_students: {e}")
-        return jsonify({
-            "message": "An unexpected error occurred!",
-            "error": str(e),
-            "success": False
-        }), 500
+        student_info = Student.find_student_info_by_id(user_id)
         
         
-@student_bp.route('/<student_id>', methods=['GET'])
-def get_student_by_id(student_id):
-    try:
-        result = Student.find_user_by_id(student_id)
-
-        if result:
+        if student_info:
+            clean_result = convert_objectid_to_str(student_info)
             return jsonify({
                 "message": "Student found",
-                "data": result[0].to_dict(),
+                "data": clean_result,
                 "success": True
             }), 200
 
@@ -81,7 +59,7 @@ def get_student_by_id(student_id):
         }), 404
 
     except Exception as e:
-        print(f"Error in get_student_by_id: {e}")
+        print(f"Error: {e}")
         return jsonify({
             "message": "An unexpected error occurred!",
             "error": str(e),

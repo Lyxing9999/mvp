@@ -1,4 +1,4 @@
-from app.models.user import User
+from app.models.user_model import User
 from datetime import datetime , timezone
 
 class Course:
@@ -17,15 +17,15 @@ class Course:
 class StudentInfo:
     def __init__(self, data: dict):
         if not isinstance(data, dict): data = {} 
+        self.student_id = data.get("student_id", "")
         self.grade = data.get("grade", "")
         self.major = data.get("major", "")
-        self.school_id = data.get("school_id", "")
         self.courses = [Course(c) for c in data.get("courses", [])]
     def to_dict(self):
         return{
+            "student_id" : self.student_id,
             "grade": self.grade,
             "major": self.major,
-            "school_id" : self.school_id,
             "courses" : [c.to_dict() for c in self.courses]
         }
         

@@ -1,11 +1,7 @@
 from . import teacher_bp
 from flask import request, jsonify  # type: ignore - Flask does not provide type hints for this import
-from app.models.teacher import Teacher
-from app.models.user import User
-
-
-
-
+from app.models.teacher_model import Teacher
+from app.models.user_model import User
 
 @teacher_bp.route('/create', methods=['POST'])
 def create_teacher():

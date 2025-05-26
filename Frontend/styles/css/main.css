@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+:root {
+  --color-primary: #ff4d4f; /* Light red */
+  --color-primary-light: #ff9999; /* Softer */
+  --color-accent: #ffdf70; /* Yellow */
+  --color-dark: #333333;
+  --color-light: #ffffff;
+  --color-secondary: #3f51b5;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--color-light);
+  color: var(--color-dark);
+  margin: 0;
+  padding: 0;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
