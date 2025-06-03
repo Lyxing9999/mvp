@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  frontend:
+    container_name: nuxt-frontend
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=development
+    command: ["pnpm", "dev"]
+
+  backend:
+    container_name: flask-backend
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["python", "run.py"]
