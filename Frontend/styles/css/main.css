@@ -1,12 +1,63 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary: #ff4d4f; /* Light red */
-  --color-primary-light: #ff9999; /* Softer */
-  --color-accent: #ffdf70; /* Yellow */
-  --color-dark: #333333;
-  --color-light: #ffffff;
+  --color-primary: #ff4d4f;
+  --color-primary-light: #ff9999;
+  --color-accent: #ffdf70;
+  --color-light: #1e1e1e --color-light: #ffffff;
   --color-secondary: #3f51b5;
+  --color-secondary-dark: #2c387e;
+  --color-secondary-light: #6573c3;
+  --color-secondary-light-rgb: 101, 115, 195;
+
+  /* Element Plus overrides (light) */
+  --el-color-primary: #ff4d4f;
+  --el-color-primary-dark-2: #d9363e;
+  --el-color-primary-dark-3: #c41f27;
+  --el-color-primary-dark-4: #a50c14;
+  --el-color-primary-light-3: var(--color-primary-light);
+  --el-color-primary-light-5: #ffd6d8;
+  --el-color-primary-light-7: #ffc1c4;
+  --el-color-primary-light-8: #ffb3b7;
+  --el-color-primary-light-9: #ffa8ab;
+  --el-color-primary-light-10: #ff9c9f;
+
+  --color-bg: var(--color-light);
+
+  --menu-text-color: var(--color-secondary-dark);
+
+  --color-main-light: #f9fafb;
+  --color-sidebar-light: #e5e7eb;
+}
+
+.dark {
+  --color-primary: #ff4d4f;
+  --color-primary-light: #ff6f71;
+  --color-accent: #ffe28f;
+  --color-dark: #f5f5f5;
+  --color-light: #1e1e1e;
+  --color-secondary: #8796f2;
+  --color-secondary-dark: #5c6bc0;
+  --color-secondary-light: #c5cae9;
+  --color-secondary-light-rgb: 197, 202, 233;
+
+  /* Element Plus overrides (dark) */
+  --el-color-primary: #ff4d4f;
+  --el-color-primary-dark-2: #ff6668;
+  --el-color-primary-dark-3: #ff7d7e;
+  --el-color-primary-dark-4: #ff9495;
+  --el-color-primary-light-3: #ffb3b4;
+  --el-color-primary-light-5: #ffcacc;
+  --el-color-primary-light-7: #ffe0e1;
+  --el-color-primary-light-8: #ffe8e8;
+  --el-color-primary-light-9: #fff0f0;
+  --el-color-primary-light-10: #fff8f8;
+
+  --color-bg: var(--color-dark);
+  --menu-text-color: var(--color-secondary-light);
+
+  --color-main-dark: #1f2937;
+  --color-sidebar-dark: #374151;
 }
 
 body {
@@ -15,13 +66,125 @@ body {
   color: var(--color-dark);
   margin: 0;
   padding: 0;
-}
-
-body,
-button,
-input,
-select,
-textarea {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: var(--color-dark);
+  color: var(--color-light);
+}
+
+/* Remove the default "today" highlight */
+.fc-day-today {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+/* Card styles */
+
+.card {
+  background-color: var(--color-light);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg equivalent */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  color: var(--color-dark);
+}
+
+.dark .card {
+  background-color: var(
+    --color-dark
+  ); /* or var(--color-secondary-dark) if you want */
+  color: var(--color-light);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 15px 20px -3px rgba(0, 0, 0, 0.1),
+    0 6px 8px -2px rgba(0, 0, 0, 0.05); /* shadow-xl equivalent */
+}
+
+.card-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-secondary-light);
+  background-color: var(--color-secondary-light);
+  color: var(--color-dark);
+}
+
+.el-aside {
+  background-color: var(--color-light);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease;
+}
+
+.dark .el-aside {
+  background-color: var(--color-light); /* dark mode bg from your root */
+}
+
+.el-header {
+  background-color: var(--color-light);
+  display: flex;
+  align-items: center;
+  padding-left: 1.5rem; /* px-6 */
+  padding-right: 1.5rem;
+  justify-content: space-between;
+  height: 60px;
+  transition: background-color 0.3s ease;
+}
+
+.dark .el-header {
+  background-color: var(--color-dark);
+}
+
+.el-header-button {
+  color: var(--color-dark);
+  background: transparent;
+  transition: color 0.2s;
+}
+.dark .el-header-button {
+  color: var(--color-dark);
+}
+.el-header-button:hover {
+  color: var(--el-color-primary);
+}
+.el-header-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--el-color-primary-light-5);
+}
+
+.bg-light {
+  background-color: var(--color-light) !important;
+}
+
+.bg-dark {
+  background-color: var(--color-dark) !important;
+}
+
+.text-primary {
+  color: var(--color-primary) !important;
+}
+
+.text-secondary {
+  color: var(--color-secondary) !important;
 }

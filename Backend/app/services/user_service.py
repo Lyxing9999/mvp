@@ -3,10 +3,15 @@ from app.db import get_db
 from app.enums.roles import Role
 from app.utils.objectid import ObjectId
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash  # type: ignore
+from app.models.student import StudentModel
 import logging
 from pydantic import ValidationError # type: ignore
+from app.models.teacher import TeacherModel
+from datetime import datetime, timedelta
+from app.utils.console import console
+
+
 logger = logging.getLogger(__name__)
 db = get_db()
 
@@ -22,17 +27,36 @@ class UserService:
             logger.error(f"Error parsing user data: {e}")
             return None
         
-        
-        
     @staticmethod
-    def _to_objectid(id_str: str) -> Optional[ObjectId]:
-        
+    def _to_users(data_list: List[dict]) -> List[UserModel]:
+        return [UserModel.model_validate(data) for data in data_list if data]
+
+    @staticmethod
+    def _to_objectid(id_val: str | ObjectId) -> Optional[ObjectId]:
+        if isinstance(id_val, ObjectId):
+            return id_val
         try:
-            return ObjectId(id_str)
+            return ObjectId(id_val)
         except Exception as e:
             logger.error(f"Invalid ObjectId: {e}")
             return None
-
+        
+        
+    @classmethod
+    def _find_user_by_id_and_role(cls, id_str: str | ObjectId, role: str) -> Optional[UserModel]:
+        
+        obj_id = cls._to_objectid(id_str) if isinstance(id_str, str) else id_str
+        if not obj_id:
+            logger.warning(f"Invalid ObjectId: {id_str}")
+            return None
+        try:
+            user_data = db.users.find_one({"_id": obj_id, "role": role})
+            return cls._to_user(user_data) if user_data else None
+        except Exception as e:
+            logger.error(f"Failed to fetch {role} by ID: {e}")
+            return None
+        
+        
     @classmethod
     def create_user(cls, user_data: dict) -> dict:
         try:
@@ -44,7 +68,6 @@ class UserService:
         if "password" in user_dict and user_dict["password"]:
             user_dict["password"] = generate_password_hash(user_dict["password"])
 
-        # user_dict["created_at"] = datetime.now(timezone.utc)
 
         role = user_dict.get("role", Role.STUDENT.value)
         role_data = {}
@@ -61,13 +84,30 @@ class UserService:
                 return {"status": False, "msg": "Email already exists"}
             result = db.users.insert_one(user_dict)
 
+
             user_id = result.inserted_id
-            user.id = str(user_id)
             role_data["user_id"] = user_id
+            
             if role == Role.STUDENT.value:
-                db.student_info.insert_one(role_data)
+                new_student = StudentModel.create_minimal(user_id=user_id)
+                doc = new_student.model_dump(by_alias=True)
+                doc["_id"] = doc.pop("id", None) or user_id
+                if "user_id" in doc and isinstance(doc["user_id"], str):
+                    doc["user_id"] = ObjectId(doc["user_id"])
+                console.print(f"Creating student info for user_id: {user_id}, doc: {doc}")
+                console.print(type(doc["user_id"]))
+                db.student_info.insert_one(doc)
+                
             elif role == Role.TEACHER.value:
-                db.teacher_info.insert_one(role_data)
+                print(type(user_id))
+                new_teacher = TeacherModel.create_minimal(user_id=user_id)
+                doc = new_teacher.model_dump(by_alias=True)
+                doc["_id"] = doc.pop("id", None) or user_id
+                if "user_id" in doc and isinstance(doc["user_id"], str):
+                    doc["user_id"] = ObjectId(doc["user_id"])
+                console.print(f"Creating student info for user_id: {user_id}, doc: {doc}")
+                console.print(type(doc["user_id"]))
+                db.teacher_info.insert_one(doc)
             elif role == Role.ADMIN.value:
                 db.admin_info.insert_one(role_data)
             return {"status": True, "user": user}
@@ -165,7 +205,6 @@ class UserService:
 
 
 
-
     @classmethod
     def find_user_by_id(cls, id_str: str) -> Optional[UserModel]: 
         obj_id = cls._to_objectid(id_str)
@@ -186,6 +225,7 @@ class UserService:
 
     @classmethod
     def find_user_by_role(cls, role: str) -> List[UserModel]:
+        
         try:
             users_cursor = db.users.find({"role": role})
             raw_users = list(users_cursor)
@@ -204,13 +244,12 @@ class UserService:
             logger.error(f"Failed to find user by email {email}: {e}")
         return None
     
-    
+
     @classmethod
     def find_user_by_username(cls, username: str) -> Optional[Dict]:
         try:
             user_data = db.users.find_one({"username": username})
             if user_data:
-                print(user_data)
                 return cls._to_user(user_data) 
             else:
                 logger.warning(f"User not found with username: {username}")
@@ -229,3 +268,262 @@ class UserService:
         except Exception as e:
             logger.error(f"Failed to fetch all users: {e}")
             return []
+        
+        
+        
+    @classmethod
+    def find_teacher_by_id(cls, teacher_id: str | ObjectId) -> Optional[UserModel]:
+        return cls._find_user_by_id_and_role(teacher_id, Role.TEACHER.value)
+        
+        
+
+        
+    @classmethod
+    def find_student_by_id(cls, student_id: str | ObjectId) -> Optional[UserModel]:
+        return cls._find_user_by_id_and_role(student_id, Role.STUDENT.value)
+
+    @classmethod
+    def find_admin_by_id(cls, admin_id: str | ObjectId) -> Optional[UserModel]:
+        return cls._find_user_by_id_and_role(admin_id, Role.ADMIN.value)
+
+    @classmethod
+    def count_users_by_role(cls) -> dict:
+        try:
+            pipeline = [
+                {"$group": {"_id": "$role", "count": {"$sum": 1}}}
+            ]
+            result = db.users.aggregate(pipeline)
+            
+            # Initialize counts for all roles with 0
+            counts = {role.value: 0 for role in Role}
+            
+            # Update counts with actual values
+            for r in result:
+                if r["_id"] in counts:
+                    counts[r["_id"]] = r["count"]      
+            return counts
+        except Exception as e:
+            logger.error(f"Failed to count users by roles: {e}")
+            return {}
+    
+    
+    @classmethod
+    def find_user_growth_stats(cls, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1) - timedelta(milliseconds=1)
+        try:
+            pipeline = [
+                {
+                    "$match": {
+                        "created_at": {
+                            "$gte": start_dt,
+                            "$lte": end_dt
+                        }
+                    }
+                },
+                {
+                    "$facet": {
+                        "dailyCounts": [
+                            {
+                                "$group": {
+                                    "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+                                    "count": {"$sum": 1}
+                                }
+                            },
+                            {
+                                "$sort": {"_id": 1}
+                            }
+                        ],
+                        "totalCount": [
+                            {
+                                "$count": "total"
+                            }
+                        ]
+                    }
+                }
+            ]
+
+            result = list(db.users.aggregate(pipeline))
+            if not result:
+                return []
+
+            daily_counts = result[0]["dailyCounts"]
+            total_count = result[0]["totalCount"][0]["total"] if result[0]["totalCount"] else 0
+            print(f"Total user count in date range: {total_count}, Daily counts: {daily_counts}")
+            stats = []
+            for entry in daily_counts:
+                percent = (entry["count"] / total_count * 100) if total_count > 0 else 0
+                stats.append({
+                    "date": entry["_id"],
+                    "count": entry["count"],
+                    "percentage": round(percent, 2)  # round to 2 decimals
+                })
+
+            return stats
+
+        except Exception as e:
+            logger.error(f"Failed to fetch user growth stats: {e}")
+            return []
+            
+    @classmethod
+    def find_users_growth_stats_by_role(cls, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1) - timedelta(milliseconds=1)
+
+        try:
+            pipeline = [
+                {
+                    "$match": {
+                        "created_at": {
+                            "$gte": start_dt,
+                            "$lte": end_dt
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$role",
+                        "count": {"$sum": 1}
+                    }
+                },
+                {
+                    "$sort": {"count": -1}
+                }
+            ]
+
+            result = list(db.users.aggregate(pipeline))
+            if not result:
+                return []
+
+            total = sum(role["count"] for role in result)
+            for role in result:
+                role["role"] = role.pop("_id")
+                role["percentage"] = round((role["count"] / total * 100) if total > 0 else 0, 2)
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to fetch user growth stats by role: {e}")
+            return []
+
+    @classmethod
+    def find_users_growth_stats_by_role_with_comparison( cls, current_start_date: str, current_end_date: str, previous_start_date: str,previous_end_date: str) -> List[Dict[str, Any]]:
+        def parse_date_range(start, end):
+            start_dt = datetime.strptime(start, "%Y-%m-%d")
+            end_dt = datetime.strptime(end, "%Y-%m-%d") + timedelta(days=1) - timedelta(milliseconds=1)
+            return start_dt, end_dt
+
+        def get_role_counts(start_dt, end_dt):
+            pipeline = [
+                {
+                    "$match": {
+                        "created_at": {
+                            "$gte": start_dt,
+                            "$lte": end_dt
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$role",
+                        "count": {"$sum": 1}
+                    }
+                }
+            ]
+            results = list(db.users.aggregate(pipeline))
+            return {entry["_id"]: entry["count"] for entry in results}
+
+        try:
+            current_start, current_end = parse_date_range(current_start_date, current_end_date)
+            prev_start, prev_end = parse_date_range(previous_start_date, previous_end_date)
+
+            current_counts = get_role_counts(current_start, current_end)
+            prev_counts = get_role_counts(prev_start, prev_end)
+
+            all_roles = set(current_counts.keys()) | set(prev_counts.keys())
+            growth_stats = []
+
+            for role in all_roles:
+                current = current_counts.get(role, 0)
+                prev = prev_counts.get(role, 0)
+
+                if prev == 0:
+                    growth = 100.0 * current if current > 0 else 0.0
+                else:
+                    growth = ((current - prev) / prev) * 100
+
+                growth_stats.append({
+                    "role": role,
+                    "previous": prev,
+                    "current": current,
+                    "growth_percentage": round(growth, 2)
+                })
+
+            return growth_stats
+        except Exception as e:
+            logger.error(f"Failed to fetch user growth comparison stats: {e}")
+            return []
+        
+        
+    @classmethod    
+    def find_users_detail(cls, user_id: str | ObjectId) -> Optional[dict]:
+        obj_id = cls._to_objectid(user_id)
+        if not obj_id:
+            logger.error(f"Invalid ObjectId: {user_id}")
+            return None
+
+        pipeline = [
+            {"$match": {"_id": ObjectId(obj_id)}},
+
+            {"$lookup": {
+                "from": "admin",
+                "localField": "_id",
+                "foreignField": "user_id",
+                "as": "admin_info"
+            }},
+            {"$unwind": {"path": "$admin_info", "preserveNullAndEmptyArrays": True}},
+
+            {"$lookup": {
+                "from": "teacher_info",
+                "localField": "_id",
+                "foreignField": "user_id",
+                "as": "teacher_info"
+            }},
+            {"$unwind": {"path": "$teacher_info", "preserveNullAndEmptyArrays": True}},
+
+            {"$lookup": {
+                "from": "student_info",
+                "localField": "_id",
+                "foreignField": "user_id",
+                "as": "student_info"
+            }},
+            {"$unwind": {"path": "$student_info", "preserveNullAndEmptyArrays": True}},
+        ]
+
+
+        
+        try:
+            data = list(db.users.aggregate(pipeline))
+            print(f"User detail data fetched: {data}")
+        except Exception as e:
+            print(f"Aggregation failed: {str(e)}")
+            return None
+
+        user_doc = data[0]
+
+        # Parse base user info
+        user = UserModel(**user_doc)
+        result = {
+            "profile": user.dict(exclude={"password"})
+        }
+
+        if user.role == "teacher" and user_doc.get("teacher_info"):
+            result["teacher_info"] = TeacherModel(**user_doc["teacher_info"]).dict()
+        elif user.role == "student" and user_doc.get("student_info"):
+            result["student_info"] = StudentModel(**user_doc["student_info"]).dict()
+        elif user.role == "admin" and user_doc.get("admin_info"):
+            result["admin_info"] = AdminModel(**user_doc["admin_info"]).dict()
+
+        return result

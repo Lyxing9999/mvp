@@ -152,9 +152,9 @@
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import teacher from "~/assets/image/svg/teacherIcon.svg";
-import student from "~/assets/image/svg/studentIcon.svg";
-import admin from "~/assets/image/svg/adminIcon.svg";
+import teacher from "~/assets/icons/svg/teacher.svg";
+import student from "~/assets/icons/svg/student.svg";
+import admin from "~/assets/icons/svg/admin.svg";
 
 const { $api } = useNuxtApp();
 const router = useRouter();
@@ -211,7 +211,7 @@ const register = async () => {
   loading.value = true;
 
   try {
-    const res = await $api.post("/auth/register", {
+    const res = await $api.post("/api/auth/register", {
       username: form.username,
       password: form.password,
       role: form.role,

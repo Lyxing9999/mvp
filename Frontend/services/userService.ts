@@ -1,95 +1,55 @@
-import { useNuxtApp, useRuntimeConfig, useRouter } from "#imports";
-import { ElMessage } from "element-plus";
-import type { AuthUser } from "~/types/auth";
-import { UserModel } from "~/models/userModel";
-
-// Define roles for type safety
-export enum UserRole {
-  Admin = "admin",
-  Teacher = "teacher",
-  Student = "student",
-}
-
-interface LoginResponse {
-  user: AuthUser;
-  access_token: string;
-}
-
-export class AuthService {
+import { useNuxtApp } from "#imports";
+import type { User } from "@/types/user";
+import type { Role } from "@/types/role";
+import type { UserDetail } from "@/types/userServiceInterface";
+export class UserService {
   private $api = useNuxtApp().$api;
-  private router = useRouter();
-  private config = useRuntimeConfig();
+  private baseURL = "/api/admin/";
 
-  async login(form: { username: string; password: string }) {
-    if (!form.username || !form.password) {
-      ElMessage.warning("Please fill in all fields");
-      return;
-    }
+  async listUsers(): Promise<User[]> {
+    const res = await this.$api.get<{ data: User[] }>(this.baseURL);
+    return res.data.data;
+  }
 
-    try {
-      const res = await this.$api.post<LoginResponse>("/auth/login", form);
+  async getUserDetails(id: string): Promise<UserDetail> {
+    const res = await this.$api.get<{ data: UserDetail }>(
+      `${this.baseURL}users/detail/${id}`
+    );
+    return res.data.data;
+  }
 
-      if (!res?.data) {
-        ElMessage.error("No data from server");
-        return;
+
+  async createUser(userData: any) {
+    const res = await this.$api.post(`users/${this.baseURL}`, userData);
+    return res.data.data;
+  }
+
+  async updateUser(id: string, userData: any) {
+    const res = await this.$api.put(`users/${this.baseURL}${id}`, userData);
+    return res.data.data;
+  }
+
+  async deleteUser(id: string) {
+    const res = await this.$api.delete(`${this.baseURL}${id}`);
+    return res.data.data;
+  }
+
+  async countByRole(): Promise<Record<Role, number>> {
+    const res = await this.$api.get<{ data: Record<string, number> }>(
+      `${this.baseURL}users/count-by-role`
+    );
+    return res.data.data as Record<Role, number>;
+  }
+
+  async compareGrowthStatsByRole(
+    dates: Record<string, string | number>
+  ): Promise<Record<string, number>> {
+    const res = await this.$api.get<{ data: Record<string, number> }>(
+      `${this.baseURL}users/growth-stats-by-role`,
+      {
+        params: dates,
       }
-
-      const userData = res.data.user;
-      const token = res.data.access_token;
-
-      if (!userData || !token) {
-        ElMessage.error("Invalid response from server");
-        return;
-      }
-
-      // Store token
-      this.storeToken(token);
-
-      // Instantiate user model
-      const user = new UserModel(userData);
-
-      console.log("Logged in user:", user.toDict());
-
-      // Redirect according to user role
-      this.redirectByRole(user.role);
-    } catch (err) {
-      console.error("Login failed", err);
-      ElMessage.error("Login failed, please try again");
-    }
-  }
-
-  loginWithGoogle() {
-    window.location.href = `${this.config.public.apiBase}/auth/google/login`;
-  }
-
-  logout() {
-    this.clearToken();
-    this.router.push("/auth/login");
-    ElMessage.success("Logged out successfully");
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem("token");
-  }
-
-  private storeToken(token: string) {
-    localStorage.setItem("token", token);
-  }
-
-  private clearToken() {
-    localStorage.removeItem("token");
-  }
-
-  private redirectByRole(role: string) {
-    switch (role) {
-      case UserRole.Admin:
-        this.router.push("/admin/dashboard");
-        break;
-      case UserRole.Teacher:
-        this.router.push("/teacher/dashboard");
-        break;
-      default:
-        this.router.push("/student/dashboard");
-    }
+    );
+    return res.data.data;
   }
 }

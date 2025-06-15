@@ -17,6 +17,11 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface LoginResponse {
+  user: AuthUser;
+  access_token: string;
+}
+
 export interface AuthContext {
   user: AuthUser | null;
   login: (credentials: LoginCredentials) => Promise<void>;

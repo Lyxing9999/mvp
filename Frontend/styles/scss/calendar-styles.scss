@@ -1,0 +1,198 @@
+/* Variables from CSS */
+$btn-bg: var(--color-primary);
+$btn-bg-hover: var(--color-primary-light);
+$btn-color: var(--color-light);
+$btn-disabled-bg: var(--color-gray-light);
+$btn-disabled-color: var(--color-gray-dark);
+$toolbar-title-color: var(--color-secondary-dark);
+$day-today-bg: var(--color-secondary-light);
+$day-today-number-bg: var(--color-primary-light);
+$day-today-number-color: var(--color-light);
+
+/* Buttons styling */
+.fc-button {
+  background-color: $btn-bg !important;
+  color: $btn-color;
+  border: none;
+  border-radius: 6px;
+  gap: 0.5em;
+  padding: 0.4em 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: $btn-bg-hover !important;
+  }
+  &:focus-visible {
+    border-color: $btn-bg-hover !important;
+  }
+  &:disabled {
+    background-color: $btn-disabled-bg !important;
+    color: $btn-disabled-color !important;
+    cursor: not-allowed;
+  }
+}
+
+/* Toolbar title */
+.fc-toolbar-title {
+  font-size: 1.2em !important;
+  font-weight: 600;
+  color: $toolbar-title-color;
+}
+
+/* Smaller fonts */
+.fc {
+  .fc-col-header-cell-cushion,
+  .fc-daygrid-day-number,
+  .fc-event-title {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Light border around day cells */
+.fc-daygrid-day {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+/* Padding inside day cells */
+.fc-daygrid-day-frame {
+  padding: 4px !important;
+}
+
+/* Event title styling */
+.fc-event-title {
+  font-size: 0.75rem !important;
+  max-width: 70% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  padding: 0;
+  display: block !important;
+  line-height: 1.2;
+  text-align: center;
+  margin: 0 auto;
+  position: relative;
+  cursor: pointer;
+
+  .slide-text {
+    display: inline-block;
+    position: relative;
+  }
+
+  &:hover .slide-text {
+    animation: slideLeft 3s linear infinite;
+  }
+}
+
+@keyframes slideLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% + 70%));
+  }
+}
+
+/* Today cell background */
+.fc-day-today,
+.fc-day-today > .fc-daygrid-day-frame {
+  background-color: rgba(var(--color-secondary-light-rgb), 0.9) !important;
+  border-radius: 10px !important;
+}
+
+/* Today day number */
+.fc-day-today {
+  .fc-daygrid-day-number {
+    font-weight: bold;
+    color: $day-today-number-color !important;
+    user-select: none;
+    position: relative;
+    z-index: 1;
+    width: auto !important;
+    height: auto !important;
+    line-height: normal !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+  }
+}
+
+/* === Dark mode overrides === */
+.dark {
+  /* Button overrides if needed */
+  .fc-button {
+    background-color: var(--color-primary-dark, $btn-bg) !important;
+    color: var(--color-light) !important;
+
+    &:hover {
+      background-color: var(
+        --color-primary-dark-hover,
+        $btn-bg-hover
+      ) !important;
+    }
+
+    &:disabled {
+      background-color: var(
+        --color-gray-dark-disabled,
+        $btn-disabled-bg
+      ) !important;
+      color: var(--color-gray-light-disabled, $btn-disabled-color) !important;
+    }
+  }
+
+  /* Toolbar title */
+  .fc-toolbar-title {
+    color: var(--color-secondary-light) !important;
+  }
+
+  /* Day cells */
+  .fc-daygrid-day {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .fc-day-today,
+  .fc-day-today > .fc-daygrid-day-frame {
+    background-color: rgba(var(--color-secondary-light-rgb), 0.4) !important;
+  }
+
+  /* Today day number in dark */
+  .fc-day-today .fc-daygrid-day-number {
+    color: var(--color-light) !important;
+  }
+}
+
+.calendar-card {
+  padding: 8px;
+  max-width: 350px; /* Limit the card width */
+  margin: 0 auto;
+}
+
+.calendar-wrapper {
+  max-width: 100%;
+  max-height: 400px; /* Limit height */
+  overflow-y: auto;
+  font-size: 0.85rem; /* Smaller font */
+}
+
+/* Further reduce internal calendar fonts and paddings */
+.calendar-wrapper .fc-button {
+  font-size: 0.8rem !important;
+  padding: 0.3em 0.7em !important;
+  border-radius: 4px !important;
+}
+
+.calendar-wrapper .fc-toolbar-title {
+  font-size: 1rem !important;
+}
+
+.calendar-wrapper .fc-col-header-cell-cushion,
+.calendar-wrapper .fc-daygrid-day-number,
+.calendar-wrapper .fc-event-title {
+  font-size: 0.65rem !important;
+}
+
+.calendar-wrapper .fc-daygrid-day-frame {
+  padding: 2px !important;
+}

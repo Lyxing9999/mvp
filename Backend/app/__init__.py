@@ -21,11 +21,12 @@ def create_app():
     oauth.init_app(app)
     from .auth.routes import auth_bp
     from .admin.routes import admin_bp
-    # from .routes.teacher.routes import teacher_bp
+    from .routes.teacher.routes import teacher_bp
     # from .routes.student.routes import student_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
-    # app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
+    app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
     # app.register_blueprint(student_bp, url_prefix='/api/student')
-
+    for rule in app.url_map.iter_rules():
+        print(f"{rule} -> methods: {rule.methods}")
     return app

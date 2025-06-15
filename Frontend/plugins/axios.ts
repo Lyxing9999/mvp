@@ -1,7 +1,7 @@
 // ~/plugins/api.ts
 import axios from "axios";
-import { useCookie, useRuntimeConfig, navigateTo, useRoute } from "#app";
-
+import { useRuntimeConfig, navigateTo, useRoute } from "#app";
+import { useAuthStore } from "~/stores/authStore";
 export default defineNuxtPlugin(() => {
   const route = useRoute();
 
@@ -14,7 +14,8 @@ export default defineNuxtPlugin(() => {
 
   // Attach token from localStorage
   api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
+    const authStore = useAuthStore();
+    const token = authStore.token;
     console.log(token);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;

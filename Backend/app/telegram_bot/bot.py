@@ -20,7 +20,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Received /hello from user {update.effective_user.id}")
-    await update.message.reply_text("Hello asdfasdfasdfsfs Theara")
+    await update.message.reply_text("ក្លាហាន")
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("hello", hello))

@@ -95,9 +95,9 @@
 
 <script setup lang="ts">
 import { ref, reactive } from "vue";
-import schoolLogo from "~/assets/image/ppiu.png";
-import googleIcon from "~/assets/image/svg/googleIcon.svg";
-import { AuthService } from "~/services/userService";
+import schoolLogo from "~/assets/image/ppiu_logo_text.png";
+import googleIcon from "~/assets/icons/svg/google.svg";
+import { AuthService } from "~/services/authService";
 
 const hover = ref(false);
 const hoverGoogle = ref(false);

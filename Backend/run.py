@@ -1,6 +1,9 @@
 import threading
 from app import create_app
 from app.telegram_bot.bot import run_telegram_bot
+from app.utils.rich_patch import enable_rich_print
+from app.utils.console import console
+enable_rich_print()
 
 app = create_app()
 

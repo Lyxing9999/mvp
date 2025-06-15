@@ -2,7 +2,7 @@ import jwt  # type: ignore
 from datetime import datetime, timedelta, timezone
 from config import Config
 from functools import wraps
-from flask import request, jsonify  # type: ignore
+from flask import request, jsonify, g  # type: ignore
 
 
 SECRET_KEY = Config.SECRET_KEY
@@ -32,7 +32,7 @@ def role_required(allowed_roles: list[str]):
                 role = payload.get("role")
                 if role not in allowed_roles:
                     return jsonify({"msg": "Access denied: role not allowed"}), 403
-                request.user = payload  
+                g.user = payload 
             except jwt.ExpiredSignatureError:
                 return jsonify({"msg": "Token expired"}), 401
             except jwt.InvalidTokenError:

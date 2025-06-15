@@ -2,9 +2,11 @@
 definePageMeta({
   layout: "admin",
 });
+import Dashboard from "~/views/admin/Dashboard/index.vue";
 </script>
 
 <template>
-  <h1>Welcome to Admin Dashboard</h1>
-  <p>This page uses the admin layout.</p>
+  <el-card class="w-full h-full">
+    <Dashboard />
+  </el-card>
 </template>

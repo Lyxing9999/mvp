@@ -1,9 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "admin-layout",
+  layout: "teacher",
 });
 </script>
 
-<template>
-  <h1>Admin Dashboard</h1>
-</template>
+<template>asdfsafs</template>

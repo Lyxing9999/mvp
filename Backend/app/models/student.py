@@ -1,9 +1,10 @@
 from datetime import datetime, timezone, date
-from pydantic import BaseModel, EmailStr, Field  # type: ignore
+from pydantic import BaseModel, Field  # type: ignore
 from typing import Optional, List, Dict
 from app.models.user import UserModel
 from app.enums.status import AttendanceStatus
 from app.utils.objectid import ObjectId
+from app.utils.pyobjectid import PyObjectId
 class StudentInfoModel(BaseModel):
     student_id: str
     grade: Optional[str] = None
@@ -13,7 +14,7 @@ class StudentInfoModel(BaseModel):
     batch: Optional[str] = None
     address: Optional[str] = None
     phone_number: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     attendance_record: Dict[str, AttendanceStatus] = Field(default_factory=dict)
     courses_enrolled: List[str] = Field(default_factory=list)
     scholarships: List[str] = Field(default_factory=list)
@@ -21,19 +22,55 @@ class StudentInfoModel(BaseModel):
     remaining_credits: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
+    
+    @classmethod
+    def create_minimal(cls, **overrides):
+        data = {
+            "student_id": "",
+            "grade": None,
+            "class_ids": [],
+            "major": None,
+            "birth_date": None,
+            "batch": None,
+            "address": None,
+            "phone_number": None,
+            "email": None,
+            "attendance_record": {},
+            "courses_enrolled": [],
+            "scholarships": [],
+            "current_gpa": 0.0,
+            "remaining_credits": 0,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": None,
+        }
+        data.update(overrides)
+        return cls(**data)
+        
+
 
     model_config = {
         "from_attributes": True,
         "use_enum_values": True,
     }
 
-class Student(UserModel):
+class StudentModel(UserModel):
     id: Optional[str] = Field(default_factory=lambda: str(ObjectId()), alias="_id")
-    user_id: str
+    user_id: PyObjectId
     student_info: StudentInfoModel
-  
+    
+    @classmethod
+    def create_minimal(cls, user_id: PyObjectId, **overrides):
+        student_info = StudentInfoModel.create_minimal()
+        data = {
+            "user_id": user_id,
+            "student_info": student_info,
+        }
+        data.update(overrides)
+        return cls(**data)
+    
     model_config = {
         "from_attributes": True,
+        "json_encoders": {ObjectId: str, PyObjectId: str},
         "populate_by_name": True,
         "arbitrary_types_allowed": True,
     }
