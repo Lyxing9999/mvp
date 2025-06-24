@@ -2,7 +2,9 @@
 definePageMeta({
   layout: "admin",
 });
-import FullCalendarKH from "~/components/Calendar/CambodiaCalendar.vue";
+import BaseDictInput from "~/components/Base/BaseDictInput.vue";
+import { ref } from "vue";
+const form = ref<Record<string, string>>({});
 </script>
 
 <template>
@@ -10,12 +12,8 @@ import FullCalendarKH from "~/components/Calendar/CambodiaCalendar.vue";
     <h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
     <el-card class="p-6">
       <p>Welcome to the Admin Dashboard!</p>
-      <!-- Add your widgets and stats here -->
-    </el-card>
-  </div>
 
-  <div class="p-4">
-    <h1 class="text-xl font-bold mb-4">🇰🇭 Cambodian Holidays</h1>
-    <FullCalendarKH />
+      <BaseDictInput v-model="form" :keys="['title', 'message']" />
+    </el-card>
   </div>
 </template>

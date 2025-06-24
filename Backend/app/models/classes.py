@@ -31,5 +31,5 @@ class ClassModel(BaseModel):
     }
     def record_update(self):
         self.update_history.append(datetime.now(timezone.utc))
-    def to_dict(self) -> dict:
-        return self.model_dump(exclude_none=True)
+
+        

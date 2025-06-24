@@ -9,7 +9,7 @@ from app.auth.jwt_utils import create_access_token
 from app.utils.response_utils import Response  # type: ignore
 
 # Unified JSON response helper
-def response(msg, code=200, data=None):
+def response(msg, code=200, data=None): 
     body = {"msg": msg}
     if data is not None:
         body["data"] = data
@@ -83,32 +83,36 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """Login user and return JWT."""
-    data = request.get_json() or {}
-    username = data.get('username')
-    password = data.get('password')
+    try:
 
-    if not username or not password:
-        return Response.error_response("Username and password are required", status_code=400)
+        """Login user and return JWT."""
+        data = request.get_json() or {}
+        username = data.get('username')
+        password = data.get('password')
 
-    user = UserService.find_user_by_username(username)
-    if not user or not check_password_hash(user.password, password):
-        return Response.unauthorized_response("Invalid username or password")
+        if not username or not password:
+            return Response.error_response("Username and password are required", status_code=400)
 
-    access_token = create_access_token(
-        data={"role": user.role, "id": str(user.id)},
-        expire_delta=timedelta(hours=1)
-    )
+        user = UserService.find_user_by_username(username)
+        if not user or not check_password_hash(user.password, password):
+            return Response.unauthorized_response("Invalid username or password")
+        
+        access_token = create_access_token(
+            data={"role": user.role, "id": str(user.id)},
+            expire_delta=timedelta(hours=1)
+        )
 
-    return Response.success_response({
-        "access_token": access_token,
-        "user": {
-            "id": str(user.id),
-            "username": user.username,
-            "email": getattr(user, 'email', None),
-            "role": user.role,
-        }
-    }, message="Login successful")
+        return Response.success_response({
+            "access_token": access_token,
+            "user": {
+                "id": str(user.id),
+                "username": user.username,
+                "email": getattr(user, 'email', None),
+                "role": user.role,
+            }
+        }, message="Login successful")
+    except Exception as e:
+        return Response.error_response(f"Error logging in: {str(e)}", status_code=500)
 
 
 @auth_bp.route('/logout', methods=['POST'])

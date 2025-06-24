@@ -1,16 +1,16 @@
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field  # type: ignore
 from typing import Optional, List, Dict
-from app.models.user import UserModel
 from app.enums.status import AttendanceStatus
-from app.utils.objectid import ObjectId
+from app.utils.objectid import ObjectId # type: ignore
 from app.utils.pyobjectid import PyObjectId
+
 class StudentInfoModel(BaseModel):
     student_id: str
-    grade: Optional[str] = None
+    grade: Optional[int] = 0
     class_ids: List[str] = Field(default_factory=list)
     major: Optional[str] = None
-    birth_date: Optional[date] = None
+    birth_date: Optional[datetime] = None
     batch: Optional[str] = None
     address: Optional[str] = None
     phone_number: Optional[str] = None
@@ -53,8 +53,8 @@ class StudentInfoModel(BaseModel):
         "use_enum_values": True,
     }
 
-class StudentModel(UserModel):
-    id: Optional[str] = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+class StudentModel(BaseModel):
+    id: Optional[PyObjectId] = Field(None, alias="_id")
     user_id: PyObjectId
     student_info: StudentInfoModel
     

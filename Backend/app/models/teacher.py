@@ -2,9 +2,9 @@ from typing import List, Optional
 from pydantic import BaseModel, Field   # type: ignore 
 from datetime import datetime, timezone
 from app.utils.pyobjectid import PyObjectId
-from app.utils.objectid import ObjectId
+from app.utils.objectid import ObjectId  # type: ignore
 
-class TeacherInfo(BaseModel):
+class TeacherInfoModel(BaseModel):
     lecturer_id: str | None = None
     lecturer_name: str | None = None
     subjects: List[str] = Field(default_factory=list)
@@ -32,7 +32,7 @@ class TeacherModel(BaseModel):
     id: Optional[PyObjectId] = Field(None, alias="_id")
     user_id: PyObjectId
     phone_number: Optional[str] = None
-    teacher_info: TeacherInfo
+    teacher_info: TeacherInfoModel
 
     model_config = {
             "from_attributes": True,
@@ -45,7 +45,7 @@ class TeacherModel(BaseModel):
     
     @classmethod
     def create_minimal(cls, user_id: PyObjectId, **overrides):
-        teacher_info = TeacherInfo.create_minimal()
+        teacher_info = TeacherInfoModel.create_minimal()
         data = {
             "user_id": user_id,
             "phone_number": None,

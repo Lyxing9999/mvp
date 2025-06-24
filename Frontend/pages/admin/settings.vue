@@ -3,11 +3,11 @@ definePageMeta({
   layout: "admin",
 });
 
-import UserList from "~/components/Admin/ManageUser/UserList.vue";
+import AdvancedUserTable from "~/components/admin/AdvancedUserTable.vue";
 </script>
 
 <template>
-  <div>
-    <UserList />
-  </div>
+  <el-card>
+    <AdvancedUserTable />
+  </el-card>
 </template>

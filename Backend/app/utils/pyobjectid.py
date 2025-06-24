@@ -1,4 +1,4 @@
-from app.utils.objectid import ObjectId
+from app.utils.objectid import ObjectId  # type: ignore
 from pydantic import GetCoreSchemaHandler  # type: ignore
 from pydantic_core import core_schema  # type: ignore
 from typing import Any

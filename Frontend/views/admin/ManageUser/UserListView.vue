@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import UserList from "~/components/admin/ManageUser/UserList.vue";
+import AdvancedUserTable from "~/components/admin/AdvancedUserTable.vue";
 </script>
 
 <template>
-  <div class="mt-10 mx-auto">
+  <div class="mt-10">
     <el-card class="shadow-sm">
-      <UserList />
+      <AdvancedUserTable />
     </el-card>
   </div>
 </template>

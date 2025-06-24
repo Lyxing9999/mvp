@@ -4,23 +4,27 @@ from app.auth.jwt_utils import role_required
 from app.services.user_service import UserService
 from app.enums.roles import Role
 from app.utils.response_utils import Response  # type: ignore 
+from app.schemas.user_schema import UserCreateSchema, UserResponseSchema, UserUpdateSchema
+from pydantic import ValidationError  # type: ignore 
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-
-
-@admin_bp.route('/', methods=['GET'])
+@admin_bp.route('/', methods=['GET'])   
 @role_required([Role.ADMIN.value])
 def get_all_users():
     """Fetch all users (Admin only)."""
     try:
 
         users = UserService.find_all_users()
+
         if not users:
             return Response.success_response(data=[], message="No users found")
 
         user_data = [user.model_dump(exclude={"password"},by_alias=True) for user in users]
         return Response.success_response(user_data, message="Users fetched successfully")
-
+ 
     except Exception as e:
         return Response.error_response(message=f"Error fetching users: {str(e)}", status_code=500)
 
@@ -34,27 +38,32 @@ def create_user():
         if not data:
             return Response.error_response(message="Invalid JSON", status_code=400)
 
-        result = UserService.create_user(data)
+        validated_data = UserCreateSchema.model_validate(data)
+        result = UserService.create_user(validated_data.model_dump())
         if not result.get("status"):
             return Response.error_response(message=result.get("msg", "Unknown error"), status_code=400)
 
         user = result.get("user")
-        return Response.success_response(user.model_dump(exclude={"password"}), message="Successfully created user", status_code=201)
-
+        user_response = UserResponseSchema.model_validate(user)
+        return Response.success_response(user_response.model_dump(), message="Successfully created user", status_code=201)
+    except ValidationError as ve:
+      
+        return Response.error_response(message=ve.errors(), status_code=400)
     except Exception as e:
         return Response.error_response(message=f"Error creating user: {str(e)}", status_code=500)
 
 
-@admin_bp.route('/users', methods=['PUT'])
+@admin_bp.route('/users/<user_id>', methods=['PATCH'])
 @role_required([Role.ADMIN.value])
-def edit_user():
+def edit_user(user_id):
     """Edit an existing user (Admin only)."""
     try:
         user_update = request.get_json()
         if not user_update:
             return Response.error_response(message="Invalid JSON", status_code=400)
 
-        user_id = user_update.get('_id') or user_update.get('id')
+        user_id = user_id
+     
         if not user_id:
             return Response.error_response(message="User ID is required", status_code=400)
 
@@ -127,6 +136,8 @@ def count_users_by_role():
 
 
 
+
+
 @admin_bp.route('/users/growth-stats', methods=['GET'])
 @role_required([Role.ADMIN.value])
 def get_user_growth_stats():
@@ -183,20 +194,41 @@ def get_user_detail(user_id):
     """Get detailed information about a user by ID (Admin only)."""
     try:
 
-
+        if not user_id:
+            return Response.error_response(message="User ID is required", status_code=400)
         user = UserService.find_users_detail(user_id)
-        print(f"User details for ID {user_id}: {user}")
         if not user:
             return Response.not_found_response("User not found")
 
-        user.pop("password", None)  # optional: remove password if exists
-        return Response.success_response(user, message="User details fetched successfully")
+        user.pop("password", None)  
+        return Response.success_response(user, message="User details fetched successfully", status_code=200)
 
     except Exception as e:
+        logger.exception(f"Error fetching user details for ID {user_id}")  
         return Response.error_response(message=f"Error fetching user details: {str(e)}", status_code=500)
-
 
 
 # @admin_bp.route('/teacher/<teacher_id>', methods=['GET'])
 # @role_required([Role.ADMIN.value])
 # def 
+
+@admin_bp.route('/users/edit-user-detail/<user_id>', methods=['PATCH'])
+@role_required([Role.ADMIN.value])
+def edit_user_detail(user_id):
+    """Edit user detail (Admin only)."""
+    try:
+        data = request.get_json()
+        if not data:
+            return Response.error_response(message="Invalid JSON", status_code=400)
+        if "student_info" in data and "attendance_record" in data["student_info"]:
+            return Response.error_response(message="Editing attendance_record is not supported yet.", status_code=400)
+        
+        if not user_id:
+            return Response.error_response(message="User ID is required", status_code=400)
+        
+        updated_user = UserService.edit_user_detail(user_id, data)
+        if not updated_user:
+            return Response.not_found_response("User not found or update failed")
+        return Response.success_response(updated_user, message="User detail updated successfully")
+    except Exception as e:
+        return Response.error_response(message=f"Error updating user detail: {str(e)}", status_code=500)

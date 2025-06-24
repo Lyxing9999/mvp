@@ -1,4 +1,5 @@
 import { useNuxtApp } from "#imports";
+
 import type { User } from "@/types/user";
 import type { Role } from "@/types/role";
 import type { UserDetail } from "@/types/userServiceInterface";
@@ -18,14 +19,13 @@ export class UserService {
     return res.data.data;
   }
 
-
   async createUser(userData: any) {
-    const res = await this.$api.post(`users/${this.baseURL}`, userData);
+    const res = await this.$api.post(`${this.baseURL}users`, userData);
     return res.data.data;
   }
 
   async updateUser(id: string, userData: any) {
-    const res = await this.$api.put(`users/${this.baseURL}${id}`, userData);
+    const res = await this.$api.patch(`${this.baseURL}users/${id}`, userData);
     return res.data.data;
   }
 
@@ -51,5 +51,12 @@ export class UserService {
       }
     );
     return res.data.data;
+  }
+  async editUserDetail(user_id: string, userData: Partial<UserDetail>) {
+    const res = await this.$api.patch(
+      `${this.baseURL}users/edit-user-detail/${user_id}`,
+      userData
+    );
+     return res.data.data;
   }
 }

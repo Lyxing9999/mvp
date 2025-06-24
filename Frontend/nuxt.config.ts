@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
+
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-29",
   modules: ["@element-plus/nuxt", "@pinia/nuxt"],
@@ -28,7 +29,6 @@ export default defineNuxtConfig({
     middleware: ["auth"],
   },
   darkMode: "class",
-
   optimizeDeps: {
     include: [
       "@fullcalendar/core",

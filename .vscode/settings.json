@@ -1,3 +1,7 @@
 {
-  "python.analysis.extraPaths": ["./Backend/app"]
+    "python.testing.pytestArgs": [
+        "Backend"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

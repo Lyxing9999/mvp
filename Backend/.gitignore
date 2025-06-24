@@ -1,0 +1,16 @@
+# Python cache and environments
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+env/
+instance/
+
+# Python packaging/build
+*.egg-info/
+build/
+dist/
+
+# Flask logs (optional)
+*.log

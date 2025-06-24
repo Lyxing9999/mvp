@@ -4,13 +4,14 @@
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "types": ["vue", "vite/client", "node", "nuxt", "element-plus/global", "element-plus/es/components/icon", "@element-plus/icons-vue"],
     "paths": {
       "#app": [".nuxt/types/app"],
       "#imports": [".nuxt/types/imports"],
       "#components/*": [".nuxt/components/*"],
       "~/*": ["./*"],
-      "@/*": ["./*"]
-    }
+      "@/*": ["./*"],
+    } 
   },
   "include": [
     "nuxt.config.ts",

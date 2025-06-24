@@ -1,3 +1,6 @@
-<template>hello</template>
+<template>
+    
+
+</template>
 
 <script lang="ts"></script>

@@ -7,7 +7,7 @@ definePageMeta({
 </script>
 
 <template>
-  <div>
+  <el-card class="w-full h-full">
     <UserListView />
-  </div>
+  </el-card>
 </template>

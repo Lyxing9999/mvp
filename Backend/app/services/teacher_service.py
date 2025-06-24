@@ -1,4 +1,4 @@
-from app.models.teacher import TeacherModel, TeacherInfo
+from app.models.teacher import TeacherModel, TeacherInfoModel
 from app.db import get_db
 from typing import Optional, Dict, Any
 from app.utils.objectid import ObjectId
@@ -34,7 +34,7 @@ class TeacherService:
 
             if not doc:
                 return None
-            doc["teacher_info"] = TeacherInfo.model_validate(doc.get("teacher_info", {}))    
+            doc["teacher_info"] = TeacherInfoModel.model_validate(doc.get("teacher_info", {}))    
             print("Teacher info found for user_id:", user_id) 
             print("Teacher info document:", doc)       
             teacher_model = TeacherModel.model_validate(doc)
@@ -65,7 +65,7 @@ class TeacherService:
             teacher_info_dict = update_data_copy.get("teacher_info")
             if teacher_info_dict:
                 teacher_info_dict["updated_at"] = datetime.now(timezone.utc)
-                update_data_copy["teacher_info"] = TeacherInfo.model_validate(teacher_info_dict).model_dump()
+                update_data_copy["teacher_info"] = TeacherInfoModel.model_validate(teacher_info_dict).model_dump()
 
             update_data_copy["updated_at"] = datetime.now(timezone.utc)
 

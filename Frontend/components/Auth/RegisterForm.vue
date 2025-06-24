@@ -1,23 +1,27 @@
 <template>
   <Transition name="fade-slide" appear>
     <div
-      class="max-w-md mx-auto mt-16 p-8 rounded-lg shadow-lg bg-white text-center font-inter">
+      class="max-w-md mx-auto mt-16 p-8 rounded-lg shadow-lg bg-white text-center font-inter"
+    >
       <el-form
         :model="form"
         class="text-left"
         @submit.prevent="register"
-        label-position="top">
+        label-position="top"
+      >
         <!-- Username -->
         <el-form-item
           class="mb-6"
           label="Username"
           :rules="[
             { required: true, message: 'Please input email', trigger: 'blur' },
-          ]">
+          ]"
+        >
           <el-input
             v-model="form.username"
             placeholder="Enter your username"
-            class="text-[var(--color-dark)] placeholder:[var(--color-primary-light)] rounded-md" />
+            class="text-[var(--color-dark)] placeholder:[var(--color-primary-light)] rounded-md"
+          />
         </el-form-item>
 
         <!-- Password -->
@@ -30,7 +34,8 @@
               message: 'Please input password',
               trigger: 'blur',
             },
-          ]">
+          ]"
+        >
           <!-- Confirm Password -->
           <el-input
             v-model="form.password"
@@ -38,7 +43,8 @@
             type="password"
             show-password
             autocomplete="new-password"
-            class="text-[var(--color-dark)] placeholder:[var(--color-primary-light)] rounded-md" />
+            class="text-[var(--color-dark)] placeholder:[var(--color-primary-light)] rounded-md"
+          />
         </el-form-item>
         <el-form-item
           label="Confirm Password"
@@ -50,14 +56,16 @@
             },
             { validator: validateConfirmPassword, trigger: 'blur' },
           ]"
-          class="mb-6">
+          class="mb-6"
+        >
           <el-input
             v-model="form.confirmPassword"
             placeholder="Confirm your password"
             type="password"
             show-password
             autocomplete="new-password"
-            class="text-[var(--color-dark)] placeholder:[var(--color-primary-light)] rounded-md" />
+            class="text-[var(--color-dark)] placeholder:[var(--color-primary-light)] rounded-md"
+          />
         </el-form-item>
 
         <!-- Role -->
@@ -65,30 +73,35 @@
           <label
             for="role"
             class="block mb-2 text-sm"
-            :style="{ color: 'var(--color-dark)' }">
+            :style="{ color: 'var(--color-dark)' }"
+          >
             Select Role
           </label>
           <el-select
             v-model="form.role"
             placeholder="Select your role"
-            class="w-full rounded-md">
+            class="w-full rounded-md"
+          >
             <template #prefix>
               <img
                 v-if="form.role"
                 :src="roles.find((r) => r.value === form.role)?.icon"
                 alt=""
-                class="inline-block w-5 h-5 mr-2" />
+                class="inline-block w-5 h-5 mr-2"
+              />
             </template>
             <el-option
               v-for="role in roles"
               :key="role.value"
               :label="role.label"
-              :value="role.value">
+              :value="role.value"
+            >
               <template #default>
                 <img
                   :src="role.icon"
                   alt=""
-                  class="inline-block w-5 h-5 mr-2" />
+                  class="inline-block w-5 h-5 mr-2"
+                />
                 {{ role.label }}
               </template>
             </el-option>
@@ -100,12 +113,14 @@
           <el-checkbox
             class="ml-2"
             v-model="form.agree"
-            :style="{ color: 'var(--color-dark)' }">
+            :style="{ color: 'var(--color-dark)' }"
+          >
             I agree to the
             <RouterLink
               to="/terms"
               class="hover:underline"
-              :style="{ color: 'var(--color-primary)' }">
+              :style="{ color: 'var(--color-primary)' }"
+            >
               Terms and Conditions
             </RouterLink>
           </el-checkbox>
@@ -126,7 +141,8 @@
             @mouseleave="hover = false"
             :style="
               hover ? 'background-color: var(--color-primary-light); ' : ''
-            ">
+            "
+          >
             Register
           </el-button>
         </el-form-item>
@@ -135,12 +151,14 @@
       <!-- Already Registered -->
       <p
         class="mt-4 text-center text-sm"
-        :style="{ color: 'var(--color-dark)' }">
+        :style="{ color: 'var(--color-dark)' }"
+      >
         Already have an account?
         <RouterLink
           to="/auth/login"
           class="hover:underline"
-          :style="{ color: 'var(--color-primary)' }">
+          :style="{ color: 'var(--color-primary)' }"
+        >
           Login here
         </RouterLink>
       </p>

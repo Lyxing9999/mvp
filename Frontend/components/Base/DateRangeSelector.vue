@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, defineEmits } from "vue";
 
-// ✅ Move the type definition to the top
 export type DateRangeType = "all" | "day" | "week" | "month";
 
 export type FormattedDatesPayload = {
@@ -10,11 +9,10 @@ export type FormattedDatesPayload = {
   current_start_date: string;
   current_end_date: string;
 } | null;
-// ✅ Use the type in ref
+
 const dateRangeType = ref<DateRangeType>("all");
 const dateRange = ref<[Date, Date] | []>([]);
 
-// ✅ Define the emits for the component
 const emit = defineEmits<{
   (
     event: "formattedDates",
