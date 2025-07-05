@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import BaseSideBar from "~/components/Base/BaseSideBar.vue";
+import BaseSidebar from "~/components/Base/BaseSidebar.vue";
+
 import schoolLogo from "~/assets/image/ppiu_logo.png";
 import { useRoute } from "vue-router";
 
@@ -26,7 +27,7 @@ const sidebarClasses = {
 </script>
 
 <template>
-  <BaseSideBar
+  <BaseSidebar
     :is-mobile="false"
     :logo-src="schoolLogo"
     :aside-class="sidebarClasses.asideClass"

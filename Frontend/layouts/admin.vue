@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
-import AdminSidebar from "~/views/admin/layouts/SideBarView.vue";
 import AdminHeader from "~/views/admin/layouts/HeaderView.vue";
 import AdminFooter from "~/views/admin/layouts/FooterView.vue";
+import AdminSidebar from "~/views/admin/layouts/SidebarView.vue";
 
 const route = useRoute();
 
