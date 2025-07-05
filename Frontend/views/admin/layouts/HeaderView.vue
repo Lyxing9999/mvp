@@ -1,21 +1,29 @@
-<script lang="ts" setup>
-import AppHeader from "~/components/layout/AppHeader.vue";
-const headerClass =
-  "bg-white shadow px-4 py-2 flex items-center justify-between";
-const leftSectionClass = "flex items-center";
-const toggleButtonClass = "p-2 text-gray-600 hover:text-gray-900";
-const searchInputClass = "max-w-xs mx-4";
-const rightSectionClass = "flex items-center space-x-4";
-const notificationBadgeClass = "cursor-pointer";
-const darkModeButtonClass = "p-2";
-const userDropdownTriggerClass = "flex items-center cursor-pointer space-x-2";
-const userNameClass = "font-medium text-gray-700";
-</script>
+<script setup lang="ts">
+import { useAuthStore } from "~/stores/authStore";
+import BaseHeader from "~/components/Base/BaseHeader.vue";
 
+const headerStyle = { backgroundColor: "#fff" };
+
+const leftSectionClass = "flex items-center gap-4";
+const toggleButtonClass = "p-2 text-[var(--color-primary)]";
+const searchInputClass =
+  "rounded px-3 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-[var(--color-sidebar-dark)] text-sm";
+const rightSectionClass = "flex items-center gap-4";
+const notificationBadgeClass =
+  "bg-[var(--color-primary)] text-white text-xs rounded-full px-2 py-0.5";
+const darkModeButtonClass = "p-2 text-gray-500 dark:text-gray-300";
+const userDropdownTriggerClass = "flex items-center gap-2 cursor-pointer";
+const userNameClass =
+  "text-[var(--color-secondary-dark)] dark:text-[var(--color-secondary-light)] font-semibold text-sm";
+
+const authStore = useAuthStore();
+const user = authStore.user;
+</script>
 <template>
   <div class="w-full">
-    <AppHeader
-      :header-class="headerClass"
+    <BaseHeader
+      :user-name="user?.username"
+      :header-style="headerStyle"
       :left-section-class="leftSectionClass"
       :toggle-button-class="toggleButtonClass"
       :search-input-class="searchInputClass"

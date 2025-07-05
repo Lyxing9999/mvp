@@ -1,10 +1,11 @@
-import { useNuxtApp, useRuntimeConfig, useRouter } from "#imports";
+import { useNuxtApp, useRuntimeConfig, useRouter } from "nuxt/app";
 import { ElMessage } from "element-plus";
 import type { AuthUser, LoginResponse } from "~/types/auth";
 import { UserModel } from "~/models/userModel";
 import { useAuthStore } from "~/stores/authStore";
+import type { AxiosInstance } from "axios";
+import type { User } from "~/types/models/User";
 
-// Define roles for type safety
 export enum UserRole {
   Admin = "admin",
   Teacher = "teacher",
@@ -12,7 +13,7 @@ export enum UserRole {
 }
 
 export class AuthService {
-  private $api = useNuxtApp().$api;
+  private $api = useNuxtApp().$api as AxiosInstance;
   private router = useRouter();
   private config = useRuntimeConfig();
   private baseURL = "/api/auth/";
@@ -23,7 +24,7 @@ export class AuthService {
     }
 
     try {
-      const res = await this.$api.post<LoginResponse>(
+      const res = await this.$api.post<{ data: LoginResponse }>(
         `${this.baseURL}login`,
         form
       );
@@ -32,8 +33,8 @@ export class AuthService {
         return;
       }
 
-      const userData = res.data.data.user;
-      const token = res.data.data.access_token;
+      const userData = res.data?.data?.user;
+      const token = res.data?.data?.access_token;
       console.log(userData, token);
       if (!userData || !token) {
         ElMessage.error("Invalid response from server");
@@ -43,7 +44,7 @@ export class AuthService {
       const authStore = useAuthStore();
       authStore.login(token, userData);
 
-      const user = new UserModel(userData);
+      const user = new UserModel(userData as unknown as Partial<User>);
       console.log("Logged in user:", user.toDict());
 
       this.redirectByRole(user.role);

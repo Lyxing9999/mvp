@@ -1,6 +1,6 @@
 // ~/plugins/api.ts
 import axios from "axios";
-import { useRuntimeConfig, navigateTo, useRoute } from "#app";
+import { useRuntimeConfig, navigateTo, useRoute } from "nuxt/app";
 import { useAuthStore } from "~/stores/authStore";
 export default defineNuxtPlugin(() => {
   const route = useRoute();

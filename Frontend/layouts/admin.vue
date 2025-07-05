@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
-import AdminSidebar from "~/views/admin/layouts/SidebarView.vue";
+import AdminSidebar from "~/views/admin/layouts/SideBarView.vue";
 import AdminHeader from "~/views/admin/layouts/HeaderView.vue";
 import AdminFooter from "~/views/admin/layouts/FooterView.vue";
 
@@ -19,31 +19,25 @@ onUnmounted(() => {
   window.removeEventListener("resize", checkScreen);
 });
 
-const containerClass = "min-h-screen bg-gray-50 dark:bg-gray-900";
-const asideClass = "h-screen overflow-y-auto";
-const headerHeight = "64px";
-const footerHeight = "50px";
-const mainClass = "overflow-auto";
-
 const sidebarWidth = computed(() => (isMobile.value ? "65px" : "250px"));
 </script>
 
 <template>
-  <el-container :class="containerClass">
-    <el-aside :width="sidebarWidth" :class="asideClass">
+  <el-container>
+    <el-aside :width="sidebarWidth">
       <AdminSidebar :is-mobile="isMobile" />
     </el-aside>
 
     <el-container>
-      <el-header v-if="!route.meta.noHeader" :height="headerHeight">
+      <el-header v-if="!route.meta.noHeader">
         <AdminHeader :is-mobile="isMobile" />
       </el-header>
       <Transition name="page" mode="out-in">
-        <el-main :class="mainClass" :key="$route.fullPath">
+        <el-main :key="route.fullPath">
           <NuxtPage />
         </el-main>
       </Transition>
-      <el-footer v-if="!route.meta.noHeader" :height="footerHeight">
+      <el-footer v-if="!route.meta.noHeader">
         <AdminFooter :is-mobile="isMobile" />
       </el-footer>
     </el-container>

@@ -6,11 +6,13 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - node_modules:/app/node_modules
     depends_on:
       - backend
     environment:
       - NODE_ENV=development
+    env_file:
+      - ./frontend/.env
     command: ["pnpm", "dev", "--host", "0.0.0.0"]
 
   backend:
@@ -37,3 +39,5 @@ services:
 
 volumes:
   mongo_data:
+  node_modules:
+  

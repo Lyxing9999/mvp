@@ -16,6 +16,7 @@ export enum Shift {
 
 export interface ScheduleItem {
   _id?: string;
+  
   day: Day;
   shift: Shift;
   start_time: string; // Format: HH:MM

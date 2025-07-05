@@ -1,13 +1,15 @@
 import { useNuxtApp } from "nuxt/app";
+import type { AxiosInstance } from "axios";
+
 export class TeacherService {
-  private $api;
+  private $api: AxiosInstance;
   constructor() {
-    this.$api = useNuxtApp().$api;
+    this.$api = useNuxtApp().$api as AxiosInstance;
   }
 
   async fetchCurrentTeacher() {
     try {
-      const res = await this.$api.get("/api/teacher/me"); // Adjust route if needed
+      const res = await this.$api.get("/api/teacher/me");
       console.log("hello");
       console.log(res.data);
       return res.data.data;
@@ -19,7 +21,7 @@ export class TeacherService {
 
   async createTeacher(teacherData: Record<string, any>) {
     try {
-      const res = await this.$api.post("/api/teacher/", teacherData); // Adjust route if needed
+      const res = await this.$api.post("/api/teacher/", teacherData);
       return res.data.data;
     } catch (e) {
       console.error("Error creating teacher", e);

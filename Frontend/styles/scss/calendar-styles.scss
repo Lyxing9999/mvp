@@ -1,21 +1,8 @@
-/* Variables from CSS */
-$btn-bg: var(--color-primary);
-$btn-bg-hover: var(--color-primary-light);
-$btn-color: var(--color-light);
-$btn-disabled-bg: var(--color-gray-light);
-$btn-disabled-color: var(--color-gray-dark);
-$toolbar-title-color: var(--color-secondary-dark);
-$day-today-bg: var(--color-secondary-light);
-$day-today-number-bg: var(--color-primary-light);
-$day-today-number-color: var(--color-light);
-
-/* Buttons styling */
+/* === BASE BUTTON & TOOLBAR === */
 .fc-button {
-  background-color: $btn-bg !important;
-  color: $btn-color;
-  border: none;
+  background: var(--color-primary) !important;
+  color: var(--color-light);
   border-radius: 6px;
-  gap: 0.5em;
   padding: 0.4em 1em;
   font-weight: 600;
   cursor: pointer;
@@ -23,26 +10,26 @@ $day-today-number-color: var(--color-light);
   box-shadow: none !important;
 
   &:hover {
-    background-color: $btn-bg-hover !important;
+    background: var(--color-primary-light) !important;
   }
+
   &:focus-visible {
-    border-color: $btn-bg-hover !important;
+    border-color: var(--color-primary-light);
   }
+
   &:disabled {
-    background-color: $btn-disabled-bg !important;
-    color: $btn-disabled-color !important;
-    cursor: not-allowed;
+    background: var(--color-gray-light) !important;
+    color: var(--color-gray-dark) !important;
   }
 }
 
-/* Toolbar title */
 .fc-toolbar-title {
   font-size: 1.2em !important;
   font-weight: 600;
-  color: $toolbar-title-color;
+  color: var(--color-secondary-dark);
 }
 
-/* Smaller fonts */
+/* === GRID BASE === */
 .fc {
   .fc-col-header-cell-cushion,
   .fc-daygrid-day-number,
@@ -51,30 +38,60 @@ $day-today-number-color: var(--color-light);
   }
 }
 
-/* Light border around day cells */
 .fc-daygrid-day {
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 10px;
+  padding: 6px;
+  position: relative;
+
+  .fc-daygrid-day-frame {
+    padding: 6px !important;
+  }
+
+  &.holiday {
+    background: rgba(var(--color-secondary-light-rgb), 0.5) !important;
+    border: 1px dashed var(--color-primary-light);
+    border-radius: 10px;
+
+    .fc-daygrid-day-number {
+      color: var(--color-primary-dark);
+      font-weight: 600;
+    }
+
+    &::after {
+      content: "🎉";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      font-size: 0.75rem;
+      pointer-events: none;
+    }
+  }
 }
 
-/* Padding inside day cells */
-.fc-daygrid-day-frame {
-  padding: 4px !important;
+/* === EVENT === */
+.fc-event-container {
+  opacity: 0.9 !important;
 }
 
-/* Event title styling */
+.fc-event {
+  background: var(--color-secondary) !important;
+  border: 1px solid var(--color-secondary) !important;
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
 .fc-event-title {
+  color: var(--color-light) !important;
+  font-weight: 600;
+  background: none !important;
   font-size: 0.75rem !important;
-  max-width: 70% !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: clip !important;
-  padding: 0;
-  display: block !important;
-  line-height: 1.2;
   text-align: center;
   margin: 0 auto;
-  position: relative;
+  padding: 3px 0 !important;
   cursor: pointer;
 
   .slide-text {
@@ -87,112 +104,131 @@ $day-today-number-color: var(--color-light);
   }
 }
 
-@keyframes slideLeft {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-100% + 70%));
-  }
-}
-
-/* Today cell background */
-.fc-day-today,
-.fc-day-today > .fc-daygrid-day-frame {
-  background-color: rgba(var(--color-secondary-light-rgb), 0.9) !important;
-  border-radius: 10px !important;
-}
-
-/* Today day number */
+/* === TODAY STYLING === */
 .fc-day-today {
+  position: relative;
+  background: var(--color-secondary) !important;
+  border-radius: 10px !important;
+  color: var(--color-secondary) !important;
+
+  .fc-daygrid-day-frame {
+    background: transparent !important;
+  }
+
   .fc-daygrid-day-number {
     font-weight: bold;
-    color: $day-today-number-color !important;
-    user-select: none;
+    color: var(--color-secondary) !important;
+    background: transparent !important;
     position: relative;
     z-index: 1;
-    width: auto !important;
-    height: auto !important;
-    line-height: normal !important;
-    border-radius: 0 !important;
-    background-color: transparent !important;
+
+  }
+
+  &::after {
+    content: "Today";
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    background: var(--color-primary);
+    color: var(--color-light);
+    padding: 2px 10px;
+    border-radius: 12px;
+    pointer-events: none;
+    font-weight: 600;
+    white-space: nowrap;
+    user-select: none;
+    z-index: 2;
+  
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      0 4px 8px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* === Dark mode overrides === */
+/* === DARK MODE === */
 .dark {
-  /* Button overrides if needed */
   .fc-button {
-    background-color: var(--color-primary-dark, $btn-bg) !important;
-    color: var(--color-light) !important;
+    background: var(--color-primary-dark) !important;
 
     &:hover {
-      background-color: var(
-        --color-primary-dark-hover,
-        $btn-bg-hover
-      ) !important;
+      background: var(--color-primary-light) !important;
     }
 
     &:disabled {
-      background-color: var(
-        --color-gray-dark-disabled,
-        $btn-disabled-bg
-      ) !important;
-      color: var(--color-gray-light-disabled, $btn-disabled-color) !important;
+      background: var(--color-gray-light) !important;
+      color: var(--color-gray-dark) !important;
     }
   }
 
-  /* Toolbar title */
   .fc-toolbar-title {
     color: var(--color-secondary-light) !important;
   }
 
-  /* Day cells */
   .fc-daygrid-day {
     border-color: rgba(255, 255, 255, 0.1);
   }
 
   .fc-day-today,
   .fc-day-today > .fc-daygrid-day-frame {
-    background-color: rgba(var(--color-secondary-light-rgb), 0.4) !important;
+    background: var(--color-primary) !important;
   }
 
-  /* Today day number in dark */
   .fc-day-today .fc-daygrid-day-number {
+    color: var(--color-light) !important;
+  }
+
+  .fc-event {
+    background: var(--color-secondary-dark) !important;
+    border-color: var(--color-secondary-dark) !important;
+  }
+
+  .fc-event-title {
     color: var(--color-light) !important;
   }
 }
 
+/* === CARD STYLE === */
 .calendar-card {
   padding: 8px;
-  max-width: 350px; /* Limit the card width */
+  max-width: 350px;
   margin: 0 auto;
 }
 
 .calendar-wrapper {
   max-width: 100%;
-  max-height: 400px; /* Limit height */
+  max-height: 400px;
   overflow-y: auto;
-  font-size: 0.85rem; /* Smaller font */
+  font-size: 0.85rem;
+
+  .fc-button {
+    font-size: 0.8rem !important;
+    padding: 0.3em 0.7em !important;
+    border-radius: 4px !important;
+  }
+
+  .fc-toolbar-title {
+    font-size: 1rem !important;
+  }
+
+  .fc-col-header-cell-cushion,
+  .fc-daygrid-day-number,
+  .fc-event-title {
+    font-size: 0.65rem !important;
+  }
+
+  .fc-daygrid-day-frame {
+    padding: 2px !important;
+  }
 }
 
-/* Further reduce internal calendar fonts and paddings */
-.calendar-wrapper .fc-button {
-  font-size: 0.8rem !important;
-  padding: 0.3em 0.7em !important;
-  border-radius: 4px !important;
-}
-
-.calendar-wrapper .fc-toolbar-title {
-  font-size: 1rem !important;
-}
-
-.calendar-wrapper .fc-col-header-cell-cushion,
-.calendar-wrapper .fc-daygrid-day-number,
-.calendar-wrapper .fc-event-title {
-  font-size: 0.65rem !important;
-}
-
-.calendar-wrapper .fc-daygrid-day-frame {
-  padding: 2px !important;
+/* === TEXT SLIDE ANIMATION === */
+@keyframes slideLeft {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(calc(-100% + 70%)); }
 }

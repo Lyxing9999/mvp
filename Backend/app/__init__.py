@@ -2,6 +2,7 @@ from flask import Flask # type: ignore
 from config import Config
 from app.extensions import init_extensions, mongo_client
 from authlib.integrations.flask_client import OAuth # type: ignore
+from flask_swagger_ui import get_swaggerui_blueprint # type: ignore
 
 oauth = OAuth()
 
@@ -27,6 +28,14 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
     # app.register_blueprint(student_bp, url_prefix='/api/student')
+    app.register_blueprint(
+        get_swaggerui_blueprint(
+            '/api/docs',
+            '/api/admin/openapi.yaml',
+            config={'app_name': 'School Management System'}
+        ),
+        url_prefix='/api/docs'
+    )
     for rule in app.url_map.iter_rules():
         print(f"{rule} -> methods: {rule.methods}")
     return app

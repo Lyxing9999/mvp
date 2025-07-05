@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import VChart from "vue-echarts";
-import * as echarts from "echarts"; // Import echarts to use graphic.LinearGradient
+import * as echarts from "echarts";
 
 const attendanceData = {
   present: 120,

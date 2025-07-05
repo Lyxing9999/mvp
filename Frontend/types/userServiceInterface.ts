@@ -1,9 +1,11 @@
-import type { User } from "@/types/user";
-import type { Role } from "@/types/role";
-import type { AuthUser } from "@/types/auth";
-import type { Teacher } from "@/types/models/Teacher";
-import type { Student } from "@/types/models/Student";
+import type { User } from "~/types/models/User";
 import type { AxiosInstance } from "axios";
+import type { Teacher } from "~/types/models/Teacher";
+import type { Student } from "~/types/models/Student";
+import type { AuthUser as AuthUserType } from "~/types/auth";
+import type { Student as StudentType } from "~/types/models/Student";
+import type { Teacher as TeacherType } from "~/types/models/Teacher";
+import type { User as UserType } from "~/types/models/User";
 
 export interface UserServiceInterface {
   listUsers(): Promise<User[]>;
@@ -17,7 +19,7 @@ export interface UserServiceInterface {
   ): Promise<Record<string, number>>;
   getTeacherDetails(id: string): Promise<Teacher>;
   getStudentDetails(id: string): Promise<Student>;
-  getAuthUserDetails(id: string): Promise<AuthUser>;
+  getAuthUserDetails(id: string): Promise<AuthUserType>;
   setApiClient(apiClient: AxiosInstance): void;
   getApiClient(): AxiosInstance;
   setBaseURL(baseURL: string): void;
@@ -42,7 +44,62 @@ export interface UserServiceConstructor {
   new (): UserServiceInterface;
 }
 
+export type Role = "student" | "teacher" | "admin";
+
+export type Profile = {
+  id: string;
+  username: string;
+  role: Role;
+  email: string | null;
+  created_at: string;
+  updated_at: string | null;
+};
+
+export type StudentInfo = {
+  id: string;
+  user_id: string;
+  student_info: {
+    class_ids: string[];
+    batch: string;
+    birth_date: string;
+    address: string;
+    attendance_record: any;
+    created_at: string;
+    updated_at?: string;
+  };
+};
+
+export type TeacherInfo = {
+  id: string;
+  user_id: string;
+  phone_number: string;
+  teacher_info: {
+    lecturer_id: string;
+    lecturer_name: string;
+    subjects: string[];
+    created_at: string;
+    updated_at?: string;
+  };
+};
+
+export type AuthUser = {
+  id: string;
+  user_id: string;
+  admin_info: {
+    permission_level: string;
+    created_at: string;
+    updated_at?: string;
+  };
+};
+export type UserInfo = StudentType | TeacherType | AuthUserType;
+
 export type UserDetail =
-  | (User & { role: "teacher"; teacher: Teacher })
-  | (User & { role: "student"; student: Student })
-  | (User & { role: "admin"; admin_info: AuthUser });
+  | { profile: Profile & { role: "student" }; student_info: StudentType }
+  | { profile: Profile & { role: "teacher" }; teacher_info: TeacherType }
+  | { profile: Profile & { role: "admin" }; admin_info: AuthUserType };
+export enum CreateUserFormInput {
+  Username = "username",
+  Email = "email",
+  Password = "password",
+  Role = "role",
+}

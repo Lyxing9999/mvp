@@ -55,14 +55,13 @@ class StudentInfoModel(BaseModel):
 
 class StudentModel(BaseModel):
     id: Optional[PyObjectId] = Field(None, alias="_id")
-    user_id: PyObjectId
     student_info: StudentInfoModel
     
     @classmethod
-    def create_minimal(cls, user_id: PyObjectId, **overrides):
+    def create_minimal(cls, _id: PyObjectId, **overrides):
         student_info = StudentInfoModel.create_minimal()
         data = {
-            "user_id": user_id,
+            "_id": _id,
             "student_info": student_info,
         }
         data.update(overrides)

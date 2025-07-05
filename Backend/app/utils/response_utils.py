@@ -1,6 +1,4 @@
-
 from flask import jsonify # type: ignore
-
 class Response:
     @staticmethod
     def success_response(data=None, message="Success", status_code=200):

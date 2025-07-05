@@ -4,6 +4,7 @@ export enum Role {
   Admin = "admin",
 }
 
+
 export interface User {
   _id: string;
   role: Role;

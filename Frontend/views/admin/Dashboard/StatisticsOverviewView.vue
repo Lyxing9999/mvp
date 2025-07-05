@@ -132,7 +132,8 @@ const fetchNormal = async () => {
   <StatisticsCards
     v-if="mode === 'growth'"
     :user-count="growthUserCounts"
-    :user-growth="growthPercentages" />
+    :user-growth="growthPercentages"
+  />
 
   <StatisticsCards v-else :normal-count="regularUserCounts" />
 </template>

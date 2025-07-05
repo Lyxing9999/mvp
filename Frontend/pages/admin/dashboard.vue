@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import Dashboard from "~/views/admin/Dashboard/index.vue";
 definePageMeta({
   layout: "admin",
 });
-import Dashboard from "~/views/admin/Dashboard/index.vue";
 </script>
 
 <template>

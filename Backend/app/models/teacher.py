@@ -30,7 +30,6 @@ class TeacherInfoModel(BaseModel):
 
 class TeacherModel(BaseModel):
     id: Optional[PyObjectId] = Field(None, alias="_id")
-    user_id: PyObjectId
     phone_number: Optional[str] = None
     teacher_info: TeacherInfoModel
 
@@ -44,10 +43,10 @@ class TeacherModel(BaseModel):
 
     
     @classmethod
-    def create_minimal(cls, user_id: PyObjectId, **overrides):
+    def create_minimal(cls, _id: PyObjectId, **overrides):
         teacher_info = TeacherInfoModel.create_minimal()
         data = {
-            "user_id": user_id,
+            "_id": _id,
             "phone_number": None,
             "teacher_info": teacher_info,
         }

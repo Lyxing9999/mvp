@@ -1,3 +1,104 @@
+<script setup lang="ts">
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import teacher from "~/assets/icons/svg/teacher.svg";
+import student from "~/assets/icons/svg/student.svg";
+import admin from "~/assets/icons/svg/admin.svg";
+import type { AxiosError } from "axios";
+import { UserService } from "~/services/userService";
+const userService = new UserService();
+const router = useRouter();
+
+const loading = ref(false);
+const hover = ref(false);
+
+const form = reactive({
+  username: "",
+  password: "",
+  confirmPassword: "",
+  role: "student",
+  agree: false,
+});
+const roles = [
+  { label: "Student", value: "student", icon: student },
+  { label: "Admin", value: "admin", icon: admin },
+  { label: "Teacher", value: "teacher", icon: teacher },
+];
+
+const validateConfirmPassword = (rule: any, value: any, callback: any) => {
+  if (value !== form.password) {
+    callback(new Error("Passwords do not match"));
+  } else {
+    callback();
+  }
+};
+const register = async () => {
+  if (!form.username) {
+    ElMessage.warning("Username is required");
+    return;
+  }
+  if (!form.password) {
+    ElMessage.warning("Password is required");
+    return;
+  }
+  if (!form.confirmPassword) {
+    ElMessage.warning("Please confirm your password");
+    return;
+  }
+  if (!form.role) {
+    ElMessage.warning("Please select a role");
+    return;
+  }
+  if (!form.agree) {
+    ElMessage.warning("You must agree to the terms");
+    return;
+  }
+  if (form.password !== form.confirmPassword) {
+    ElMessage.error("Passwords do not match");
+    return;
+  }
+
+  loading.value = true;
+
+  try {
+    const res = await userService.createUser({
+      username: form.username,
+      password: form.password,
+      role: form.role,
+    });
+
+    ElMessage.success(res?.data?.message || "Registration successful!");
+    router.push("/auth/login");
+  } catch (err) {
+    console.error("Registration error:", err);
+    const message =
+      (err as AxiosError<{ message: string }>)?.response?.data?.message ||
+      (err as Error)?.message ||
+      "Registration failed";
+    ElMessage.error(message);
+  } finally {
+    loading.value = false;
+  }
+};
+const rules = {
+  username: [
+    { required: true, message: "Please input email", trigger: "blur" },
+  ],
+  password: [
+    { required: true, message: "Please input password", trigger: "blur" },
+  ],
+  confirmPassword: [
+    {
+      required: true,
+      message: "Please confirm your password",
+      trigger: "blur",
+    },
+    { validator: validateConfirmPassword, trigger: "blur" },
+  ],
+};
+</script>
+
 <template>
   <Transition name="fade-slide" appear>
     <div
@@ -10,13 +111,7 @@
         label-position="top"
       >
         <!-- Username -->
-        <el-form-item
-          class="mb-6"
-          label="Username"
-          :rules="[
-            { required: true, message: 'Please input email', trigger: 'blur' },
-          ]"
-        >
+        <el-form-item class="mb-6" label="Username" :rules="rules.username">
           <el-input
             v-model="form.username"
             placeholder="Enter your username"
@@ -25,17 +120,7 @@
         </el-form-item>
 
         <!-- Password -->
-        <el-form-item
-          class="mb-6"
-          label="Password"
-          :rules="[
-            {
-              required: true,
-              message: 'Please input password',
-              trigger: 'blur',
-            },
-          ]"
-        >
+        <el-form-item class="mb-6" label="Password" :rules="rules.password">
           <!-- Confirm Password -->
           <el-input
             v-model="form.password"
@@ -48,14 +133,7 @@
         </el-form-item>
         <el-form-item
           label="Confirm Password"
-          :rules="[
-            {
-              required: true,
-              message: 'Please confirm your password',
-              trigger: 'blur',
-            },
-            { validator: validateConfirmPassword, trigger: 'blur' },
-          ]"
+          :rules="rules.confirmPassword"
           class="mb-6"
         >
           <el-input
@@ -165,87 +243,6 @@
     </div>
   </Transition>
 </template>
-
-<script setup lang="ts">
-import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
-import teacher from "~/assets/icons/svg/teacher.svg";
-import student from "~/assets/icons/svg/student.svg";
-import admin from "~/assets/icons/svg/admin.svg";
-
-const { $api } = useNuxtApp();
-const router = useRouter();
-
-const loading = ref(false);
-const hover = ref(false);
-
-const form = reactive({
-  username: "",
-  password: "",
-  confirmPassword: "",
-  role: null,
-  agree: false,
-});
-const roles = [
-  { label: "Student", value: "student", icon: student },
-  { label: "Admin", value: "admin", icon: admin },
-  { label: "Teacher", value: "teacher", icon: teacher },
-];
-
-const validateConfirmPassword = (rule, value, callback) => {
-  if (value !== form.password) {
-    callback(new Error("Passwords do not match"));
-  } else {
-    callback();
-  }
-};
-const register = async () => {
-  if (!form.username) {
-    ElMessage.warning("Username is required");
-    return;
-  }
-  if (!form.password) {
-    ElMessage.warning("Password is required");
-    return;
-  }
-  if (!form.confirmPassword) {
-    ElMessage.warning("Please confirm your password");
-    return;
-  }
-  if (!form.role) {
-    ElMessage.warning("Please select a role");
-    return;
-  }
-  if (!form.agree) {
-    ElMessage.warning("You must agree to the terms");
-    return;
-  }
-  if (form.password !== form.confirmPassword) {
-    ElMessage.error("Passwords do not match");
-    return;
-  }
-
-  loading.value = true;
-
-  try {
-    const res = await $api.post("/api/auth/register", {
-      username: form.username,
-      password: form.password,
-      role: form.role,
-    });
-    ElMessage.success(res?.data?.message || "Registration successful!");
-    router.push("/auth/login");
-  } catch (err) {
-    console.error("Registration error:", err);
-    const message =
-      err?.response?.data?.message || err?.message || "Registration failed";
-    ElMessage.error(message);
-  } finally {
-    loading.value = false;
-  }
-};
-</script>
 
 <style scoped>
 .fade-slide-enter-active,

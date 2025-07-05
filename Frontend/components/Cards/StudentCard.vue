@@ -11,7 +11,8 @@
       <el-statistic
         v-else
         :value="count"
-        :value-style="{ color: growth >= 0 ? '#3f8600' : '#cf1322' }">
+        :value-style="{ color: growth >= 0 ? '#3f8600' : '#cf1322' }"
+      >
         <template #suffix>
           <el-tag :type="growth >= 0 ? 'success' : 'danger'" size="medium">
             {{ growth >= 0 ? "+" : "" }}{{ growth }}%

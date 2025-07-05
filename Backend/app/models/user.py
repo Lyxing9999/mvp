@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field # type: ignore
 from datetime import datetime, timezone
 from app.utils.pyobjectid import PyObjectId 
 from app.enums.roles import Role
-from app.utils.objectid import ObjectId
+from app.utils.objectid import ObjectId # type: ignore
 
 
 class UserModel(BaseModel):

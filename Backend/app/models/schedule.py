@@ -1,8 +1,8 @@
 from typing import Optional
-from pydantic import BaseModel , Field, time # type: ignore
+from pydantic import BaseModel , Field # type: ignore
 from app.enums.day import Day, Shift
-from app.utils.objectid import ObjectId
-
+from app.utils.objectid import ObjectId # type: ignore
+from datetime import time # type: ignore
  
 class ScheduleItemModel(BaseModel):
     id: Optional[str] = Field(default_factory=lambda: str(ObjectId()), alias="_id")

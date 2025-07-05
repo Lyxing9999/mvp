@@ -1,5 +1,8 @@
 import { Role } from "~/types/models/User";
+import type { AttendanceStatus } from "~/types/models/Attendance";
 export interface StudentInfo {
+  _id?: string;
+  user_id: string;
   student_id: string;
   grade?: string;
   class_ids: string[];
@@ -9,7 +12,7 @@ export interface StudentInfo {
   address?: string;
   phone_number?: string;
   email?: string;
-  attendance_record: Record<string, string>; // Use AttendanceStatus enum if declared
+  attendance_record: Record<string, AttendanceStatus>;
   courses_enrolled: string[];
   scholarships: string[];
   current_gpa: number;

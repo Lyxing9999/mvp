@@ -3,10 +3,10 @@ import { Role } from "~/types/models/User";
 
 export class UserModel implements User {
   _id: string;
-  role: Role;
   username: string;
   email?: string;
   password?: string;
+  role: Role;
   createdAt?: string;
 
   constructor(data: Partial<User> = {}) {

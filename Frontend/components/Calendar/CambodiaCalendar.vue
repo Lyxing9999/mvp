@@ -6,8 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
 
-// Read API key from env variable
-const apiKey = import.meta.env.VITE_CALENDARIFIC_API_KEY; // adjust prefix if needed
+const apiKey = useRuntimeConfig().public.calendarificApiKey;
 
 const calendarOptions = ref({
   plugins: [dayGridPlugin, interactionPlugin],
@@ -19,7 +18,7 @@ const calendarOptions = ref({
     left: "",
   },
   events: [],
-  eventClick(info) {
+  eventClick(info: any) {
     const event = info.event;
     selectedHoliday.value = {
       title: event.title,
@@ -28,15 +27,13 @@ const calendarOptions = ref({
     };
     showDialog.value = true;
   },
-  eventDidMount(info) {
-    // Wrap event title text with slide-text span for hover animation
+  eventDidMount(info: any) {
     const titleEl = info.el.querySelector(".fc-event-title");
     if (titleEl) {
       const text = titleEl.textContent || "";
       titleEl.innerHTML = `<span class="slide-text">${text}</span>`;
     }
 
-    // Tooltip with tippy
     tippy(info.el, {
       content: info.event.extendedProps.description || info.event.title,
       placement: "top",
@@ -52,7 +49,6 @@ const fetchCambodiaHolidays = async () => {
 
     if (cached) {
       const holidays = JSON.parse(cached);
-      console.log("Loaded holidays from storage:", holidays);
       calendarOptions.value.events = holidays;
       return;
     }
@@ -60,8 +56,8 @@ const fetchCambodiaHolidays = async () => {
     const res = await fetch(
       `https://calendarific.com/api/v2/holidays?api_key=${apiKey}&country=KH&year=${year}`
     );
-    const data = await res.json();
 
+    const data = await res.json();
     if (data.meta?.code === 200 && data.response?.holidays) {
       const events = data.response.holidays.map((holiday: any) => ({
         title: holiday.name,
@@ -98,7 +94,8 @@ const selectedHoliday = ref<{
     v-model="showDialog"
     :title="selectedHoliday?.title"
     width="400px"
-    center>
+    center
+  >
     <template #default>
       <p><strong>Date:</strong> {{ selectedHoliday?.date }}</p>
       <p><strong>Description:</strong> {{ selectedHoliday?.description }}</p>

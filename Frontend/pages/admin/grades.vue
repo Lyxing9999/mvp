@@ -5,7 +5,7 @@ definePageMeta({
 </script>
 
 <template>
-ß
+
     <el-card class="p-6">
       <p>Welcome to the Admin Dashboard!</p>
   

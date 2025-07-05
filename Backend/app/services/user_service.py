@@ -6,10 +6,13 @@ from typing import List, Optional, Dict, Any, Union
 from werkzeug.security import generate_password_hash  # type: ignore
 from app.models.student import StudentModel
 import logging
+from app.utils.dict_utils import flatten_dict # type: ignore
 from pydantic import ValidationError # type: ignore
 from app.models.teacher import TeacherModel
 from datetime import datetime, timedelta, timezone
 from app.utils.console import console
+import pymongo # type: ignore
+
 
 logger = logging.getLogger(__name__)
 db = get_db()
@@ -31,7 +34,7 @@ class UserService:
         return [UserModel.model_validate(data) for data in data_list if data]
 
     @staticmethod
-    def _to_objectid(id_val: str | ObjectId) -> Optional[ObjectId]:
+    def _to_objectid(id_val: Union[str, ObjectId]) -> Optional[ObjectId]:
         if isinstance(id_val, ObjectId):
             return id_val
         try:
@@ -55,26 +58,15 @@ class UserService:
             return None
         except Exception as e:
             logger.error(f"Error ensuring date: {e}")
-            return None
-
-    @classmethod
-    def flatten_dict(cls, d: dict, parent_key: str = '', sep: str = '.') -> dict:
-        items = []
-        for k, v in d.items():
-            new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            if isinstance(v, dict) and v is not None:
-                items.extend(cls.flatten_dict(v, new_key, sep=sep).items())
-            else:
-                items.append((new_key, v))
-        return dict(items)
+            return None 
 
         
     @classmethod
-    def _find_user_by_id_and_role(cls, id_str: str | ObjectId, role: str) -> Optional[UserModel]:
+    def _find_user_by_id_and_role(cls, _id: Union[str, ObjectId], role: str) -> Optional[UserModel]:
         
-        obj_id = cls._to_objectid(id_str) if isinstance(id_str, str) else id_str
+        obj_id = cls._to_objectid(_id) if isinstance(_id, str) else _id
         if not obj_id:
-            logger.warning(f"Invalid ObjectId: {id_str}")
+            logger.warning(f"Invalid ObjectId: {_id}")
             return None
         try:
             user_data = db.users.find_one({"_id": obj_id, "role": role})
@@ -85,21 +77,21 @@ class UserService:
         
         
     @classmethod
-    def create_user(cls, user_data: dict) -> dict:
+    def create_user(cls, data: dict) -> dict:
         try:
-            user = UserModel.model_validate(user_data)
+            user = UserModel.model_validate(data)
         except ValidationError as e:
             return {"status": False, "msg": f"Validation error: {str(e)}"}
 
-        user_dict = user.model_dump(by_alias=True, exclude={"id"})
-        if "password" in user_dict and user_dict["password"]:
-            user_dict["password"] = generate_password_hash(user_dict["password"])
+        data = user.model_dump(by_alias=True, exclude={"id"})
+        if "password" in data and data["password"]:
+            data["password"] = generate_password_hash(data["password"])
 
 
-        role = user_dict.get("role", Role.STUDENT.value)
+        role = data.get("role", Role.STUDENT.value)
         role_data = {}
-        username = user_dict.get("username")
-        email = user_dict.get("email")
+        username = data.get("username")
+        email = data.get("email")
         try:
             if not username and not email:
                 return {"status": False, "msg": "Username or email is required"}
@@ -109,33 +101,33 @@ class UserService:
 
             if email and db.users.find_one({"email": email}):
                 return {"status": False, "msg": "Email already exists"}
-            result = db.users.insert_one(user_dict)
+            result = db.users.insert_one(data)
 
 
-            user_id = result.inserted_id
-            role_data["user_id"] = user_id
+            _id = result.inserted_id
+            role_data["_id"] = _id
             
             if role == Role.STUDENT.value:
-                new_student = StudentModel.create_minimal(user_id=user_id)
-                doc = new_student.model_dump(by_alias=True)
-                doc["_id"] = doc.pop("id", None) or user_id
-                if "user_id" in doc and isinstance(doc["user_id"], str):
-                    doc["user_id"] = ObjectId(doc["user_id"])
-                console.print(f"Creating student info for user_id: {user_id}, doc: {doc}")
-                console.print(type(doc["user_id"]))
-                db.student_info.insert_one(doc)
+                new_student = StudentModel.create_minimal(_id=_id)
+                data = new_student.model_dump(by_alias=True)
+                data["_id"] = data.pop("id", None) or _id
+                if "_id" in data and isinstance(data["_id"], str):
+                    data["_id"] = ObjectId(data["_id"])
+                console.print(f"Creating student info for user_id: {_id}, data: {data}")
+                console.print(type(data["_id"]))
+                db.student_info.insert_one(data)
                 
             elif role == Role.TEACHER.value:
 
-                new_teacher = TeacherModel.create_minimal(user_id=user_id)
-                doc = new_teacher.model_dump(by_alias=True)
-                doc["_id"] = doc.pop("id", None) or user_id
-                if "user_id" in doc and isinstance(doc["user_id"], str):
-                    doc["user_id"] = ObjectId(doc["user_id"])
-                db.teacher_info.insert_one(doc)
+                new_teacher = TeacherModel.create_minimal(_id=_id)
+                data = new_teacher.model_dump(by_alias=True)
+                data["_id"] = data.pop("id", None) or _id
+                if "_id" in data and isinstance(data["_id"], str):
+                    data["_id"] = ObjectId(data["_id"])
+                db.teacher_info.insert_one(data)
             elif role == Role.ADMIN.value:
                 db.admin_info.insert_one(role_data)
-            user.id = str(user_id)
+            user.id = str(_id)
             return {"status": True, "user": user}
         
         except Exception as e:
@@ -215,11 +207,11 @@ class UserService:
 
             role = user.get("role")
             if role == Role.STUDENT.value:
-                db.student_info.delete_one({"user_id": _id})
+                db.student_info.delete_one({"_id": _id})
             elif role == Role.TEACHER.value:
-                db.teacher_info.delete_one({"user_id": _id})
+                db.teacher_info.delete_one({"_id": _id})
             elif role == Role.ADMIN.value:
-                db.admin_info.delete_one({"user_id": _id})
+                db.admin_info.delete_one({"_id": _id})
 
             result = db.users.delete_one({"_id": _id})
             return result.deleted_count > 0
@@ -304,8 +296,8 @@ class UserService:
 
         
     @classmethod
-    def find_student_by_id(cls, student_id: Union[str, ObjectId]) -> Optional[UserModel]:
-        return cls._find_user_by_id_and_role(student_id, Role.STUDENT.value)
+    def find_student_by_id(cls, _id: Union[str, ObjectId]) -> Optional[UserModel]:
+        return cls._find_user_by_id_and_role(_id, Role.STUDENT.value)
 
     @classmethod
     def find_admin_by_id(cls, admin_id: Union[str, ObjectId]) -> Optional[UserModel]:
@@ -493,19 +485,19 @@ class UserService:
         
         
     @classmethod    
-    def find_users_detail(cls, user_id: Union[str, ObjectId]) -> Optional[dict]:
-        obj_id = cls._to_objectid(user_id)
+    def find_users_detail(cls, _id: Union[str, ObjectId]) -> Optional[dict]:
+        obj_id = cls._to_objectid(_id)
         if not obj_id:
-            logger.error(f"Invalid ObjectId: {user_id}")
+            logger.error(f"Invalid ObjectId: {_id}")
             return None
 
         pipeline = [
-            {"$match": {"_id": ObjectId(obj_id)}},
+            {"$match": {"_id": obj_id}},
 
             {"$lookup": {
                 "from": "admin_info",
                 "localField": "_id",
-                "foreignField": "user_id",
+                "foreignField": "_id",
                 "as": "admin_info"
             }},
             {"$unwind": {"path": "$admin_info", "preserveNullAndEmptyArrays": True}},
@@ -513,7 +505,7 @@ class UserService:
             {"$lookup": {
                 "from": "teacher_info",
                 "localField": "_id",
-                "foreignField": "user_id",
+                "foreignField": "_id",
                 "as": "teacher_info"
             }},
             {"$unwind": {"path": "$teacher_info", "preserveNullAndEmptyArrays": True}},
@@ -521,7 +513,7 @@ class UserService:
             {"$lookup": {
                 "from": "student_info",
                 "localField": "_id",
-                "foreignField": "user_id",
+                "foreignField": "_id",
                 "as": "student_info"
             }},
             {"$unwind": {"path": "$student_info", "preserveNullAndEmptyArrays": True}},
@@ -557,13 +549,12 @@ class UserService:
 
   
     @classmethod
-    def edit_user_detail(cls, user_id: Union[str, ObjectId], user_update_data: dict) -> Optional[dict]:
-        obj_id = cls._to_objectid(user_id)
+    def patch_user_detail(cls, _id: Union[str, ObjectId], user_update_data: dict) -> Optional[dict]:
+        obj_id = cls._to_objectid(_id)
         if not obj_id:
-            logger.error(f"Invalid ObjectId: {user_id}")
+            logger.error(f"Invalid ObjectId: {_id}")
             return None
         try:
-            # STEP 1: Find full user with embedded info (admin/teacher/student)
             full_user = cls.find_users_detail(obj_id)
             if not full_user:
                 logger.error(f"User not found with _id: {obj_id}")
@@ -573,53 +564,62 @@ class UserService:
             role = base_user.get("role")
             logger.info(f"User found with role: {role}")
 
-            # STEP 2: Identify role and collection to update
-            if role == Role.TEACHER.value:
+            if role == Role.TEACHER:
                 collection = db.teacher_info
-            elif role == Role.STUDENT.value:
+            elif role == Role.STUDENT:
                 collection = db.student_info
-            elif role == Role.ADMIN.value:
+            elif role == Role.ADMIN:
                 collection = db.admin_info
             else:
                 logger.warning(f"Unknown role: {role}")
                 return None
 
-            # STEP 3: Prepare safe update (don’t allow _id or role)
-
+ 
             safe_update = dict(user_update_data)
             safe_update.pop("_id", None)
             safe_update.pop("role", None)
-          
+
             if not safe_update:
                 logger.warning("No valid fields to update.")
                 return None
-            if role == Role.TEACHER.value:
+
+            if role == Role.TEACHER:
                 teacher_info = safe_update.get("teacher_info", {})
                 teacher_info["updated_at"] = datetime.now(timezone.utc)
-                
                 safe_update["teacher_info"] = teacher_info
                 safe_update["phone_number"] = user_update_data.get("phone_number")
 
-            elif role == Role.STUDENT.value:
+            elif role == Role.STUDENT:
                 student_info = safe_update.get("student_info", {})
                 student_info["updated_at"] = datetime.now(timezone.utc)
-
-                
                 student_info["birth_date"] = cls.ensure_date(student_info.get("birth_date"))
-
                 safe_update["student_info"] = student_info
 
-            elif role == Role.ADMIN.value:
+            elif role == Role.ADMIN:
                 admin_info = safe_update.get("admin_info", {})
                 admin_info["updated_at"] = datetime.now(timezone.utc)
                 safe_update["admin_info"] = admin_info
-            safe_update = cls.flatten_dict(safe_update)
-            # STEP 4: Patch the correct role-specific collection
-            update_result = collection.update_one(
-                {"user_id": obj_id},
-                {"$set": safe_update}
-            )
 
+            flat_update = flatten_dict(safe_update)
+
+            attendance_prefix = "student_info.attendance_record."
+            keys_to_remove = [k for k in flat_update if k.startswith(attendance_prefix)]
+
+            if keys_to_remove:
+                for k in keys_to_remove:
+                    flat_update.pop(k)
+
+                full_attendance = (
+                    user_update_data.get("student_info", {})
+                    .get("attendance_record")
+                )
+                if full_attendance is not None:
+                    flat_update["student_info.attendance_record"] = full_attendance
+
+            update_result = collection.update_one(
+                {"_id": obj_id},
+                {"$set": flat_update}
+            )
 
             if update_result.modified_count > 0:
                 return {"status": True, "msg": "User info updated successfully"}
@@ -629,3 +629,43 @@ class UserService:
         except Exception as e:
             logger.exception(f"Exception in edit_user_detail: {e}")
             return None
+
+
+
+
+
+
+    @classmethod
+    def search_user(cls, query: str, page: int, page_size: int) -> List[UserModel]:
+        try:
+            regex = {"$regex": query, "$options": "i"}
+            skip = (page - 1) * page_size
+            pipeline = [
+                {"$match": {"$or": [{"username": regex}, {"email": regex}]}},
+                {"$skip": skip},
+                {"$limit": page_size},
+                {"$lookup": {"from": "admin_info", "localField": "_id", "foreignField": "_id", "as": "admin_info"}},
+                {"$unwind": {"path": "$admin_info", "preserveNullAndEmptyArrays": True}},
+                {"$lookup": {"from": "teacher_info", "localField": "_id", "foreignField": "_id", "as": "teacher_info"}},
+                {"$unwind": {"path": "$teacher_info", "preserveNullAndEmptyArrays": True}},
+                {"$lookup": {"from": "student_info", "localField": "_id", "foreignField": "_id", "as": "student_info"}},
+                {"$unwind": {"path": "$student_info", "preserveNullAndEmptyArrays": True}}
+            ]
+            users_cursor = db.users.aggregate(pipeline)
+            users_list = list(users_cursor)
+            return cls._to_users(users_list)
+        except ValidationError as e:
+            logger.error(f"Validation error: {e}")
+            return []
+        except TypeError as e:
+            logger.error(f"Type error: {e}")
+            return []
+        except pymongo.errors.PyMongoError as e:
+            logger.error(f"MongoDB error: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Failed to search users: {e}")
+            return []
+        
+        
+        

@@ -78,7 +78,11 @@ onMounted(() => {
 
 <template>
   <div class="date-range-selector">
-    <el-radio-group v-model="dateRangeType" @change="handleRangeChange">
+    <el-radio-group
+      v-model="dateRangeType"
+      style="--el-color-primary"
+      @change="(e) => handleRangeChange(e as DateRangeType)"
+    >
       <el-radio-button label="all">All Time</el-radio-button>
       <el-radio-button label="day">Daily</el-radio-button>
       <el-radio-button label="week">Weekly</el-radio-button>

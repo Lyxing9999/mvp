@@ -7,16 +7,19 @@ from app.utils.response_utils import Response  # type: ignore
 from app.schemas.user_schema import UserCreateSchema, UserResponseSchema, UserUpdateSchema
 from pydantic import ValidationError  # type: ignore 
 import logging
-
+from flask import send_from_directory # type: ignore
+import os
 logger = logging.getLogger(__name__)
 
 
 @admin_bp.route('/', methods=['GET'])   
 @role_required([Role.ADMIN.value])
 def get_all_users():
-    """Fetch all users (Admin only)."""
+    """Fetch all users (Admin only).
+    @return: List[UserResponseSchema]
+    @throws: Exception
+    """
     try:
-
         users = UserService.find_all_users()
 
         if not users:
@@ -30,9 +33,13 @@ def get_all_users():
 
 
 @admin_bp.route('/users', methods=['POST'])
-@role_required([Role.ADMIN.value])
 def create_user():
-    """Create a new user (Admin only)."""
+    """Create a new user (Admin only).
+    @param data: UserCreateSchema
+    @return: UserResponseSchema
+    @throws: ValidationError
+    @throws: Exception
+    """
     try:
         data = request.get_json()
         if not data:
@@ -53,21 +60,26 @@ def create_user():
         return Response.error_response(message=f"Error creating user: {str(e)}", status_code=500)
 
 
-@admin_bp.route('/users/<user_id>', methods=['PATCH'])
+@admin_bp.route('/users/<_id>', methods=['PATCH'])
 @role_required([Role.ADMIN.value])
-def edit_user(user_id):
-    """Edit an existing user (Admin only)."""
+def edit_user(_id):
+    """Edit an existing user (Admin only).
+    @param user_id: str
+    @param user_update: UserUpdateSchema
+    @return: UserResponseSchema
+    @throws: ValidationError
+    @throws: Exception
+    """
     try:
         user_update = request.get_json()
         if not user_update:
             return Response.error_response(message="Invalid JSON", status_code=400)
 
-        user_id = user_id
      
-        if not user_id:
+        if not _id:
             return Response.error_response(message="User ID is required", status_code=400)
 
-        updated_user = UserService.edit_user(user_id, user_update)
+        updated_user = UserService.edit_user(_id, user_update)
         if not updated_user:
             return Response.not_found_response("User not found or update failed")
 
@@ -77,12 +89,16 @@ def edit_user(user_id):
         return Response.error_response(message=f"Error updating user: {str(e)}", status_code=500)
 
 
-@admin_bp.route('/users/<user_id>', methods=['DELETE'])
+@admin_bp.route('/users/<_id>', methods=['DELETE'])
 @role_required([Role.ADMIN.value])
-def delete_user(user_id):
-    """Delete a user by ID (Admin only)."""
+def delete_user(_id):
+    """Delete a user by ID (Admin only).
+    @param user_id: str
+    @return: UserResponseSchema
+    @throws: Exception
+    """
     try:
-        result = UserService.delete_user(user_id)
+        result = UserService.delete_user(_id)
         if not result:
             return Response.not_found_response("User not found or delete failed")
 
@@ -92,19 +108,24 @@ def delete_user(user_id):
         return Response.error_response(message=f"Error deleting user: {str(e)}", status_code=500)
 
 
-@admin_bp.route('/users/search-user', methods=['POST'])
+@admin_bp.route('/users/find-one-user', methods=['POST'])
 @role_required([Role.ADMIN.value])
-def search_user():
-    """Search for a user by ID, username, or email (Admin only)."""
+def find_one_user():
+    """Find a user by ID, username, or email (Admin only).
+    @param data: UserSearchSchema
+    @return: UserResponseSchema
+    @throws: ValidationError
+    @throws: Exception
+    """
     try:
         data = request.get_json()
         if not data:
             return Response.error_response(message="Invalid JSON", status_code=400)
 
         user = None
-        user_id = data.get('id') or data.get('_id')
-        if user_id:
-            user = UserService.find_user_by_id(str(user_id))
+        _id = data.get('id') or data.get('_id')
+        if _id:
+            user = UserService.find_user_by_id(str(_id))
         elif 'username' in data:
             user = UserService.find_user_by_username(data['username'])
         elif 'email' in data:
@@ -125,7 +146,10 @@ def search_user():
 @admin_bp.route('/users/count-by-role', methods=['GET'])
 @role_required([Role.ADMIN.value])
 def count_users_by_role():
-    """Count users by role (Admin only)."""
+    """Count users by role (Admin only).
+    @return: List[UserResponseSchema]
+    @throws: Exception
+    """
     try:
         counts = UserService.count_users_by_role()
         return Response.success_response(counts, message="User counts by role fetched successfully")
@@ -141,12 +165,13 @@ def count_users_by_role():
 @admin_bp.route('/users/growth-stats', methods=['GET'])
 @role_required([Role.ADMIN.value])
 def get_user_growth_stats():
-    """Get user growth statistics (Admin only)."""
+    """Get user growth statistics (Admin only).
+    @return: List[UserResponseSchema]
+    @throws: Exception
+    """
     try:
-        # Get query params from URL like ?start_date=2025-01-01&end_date=2025-06-10
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
-        # Optional: validate dates here or set defaults if missing
         if not start_date or not end_date:
             return Response.error_response(message="Missing start_date or end_date query parameters", status_code=400)
 
@@ -162,9 +187,11 @@ def get_user_growth_stats():
 @admin_bp.route('/users/growth-stats-by-role', methods=['GET'])
 @role_required([Role.ADMIN.value])
 def get_user_growth_stats_by_role():  # Changed function name to match route
-    """Get user growth statistics by role (Admin only)."""
+    """Get user growth statistics by role (Admin only).
+    @return: List[UserResponseSchema]
+    @throws: Exception
+    """
     try:
-        # Get query params from URL like ?start_date=2025-01-01&end_date=2025-06-10
         current_start_date = request.args.get('current_start_date')
         current_end_date = request.args.get('current_end_date')
         previous_start_date = request.args.get('previous_start_date')
@@ -174,8 +201,7 @@ def get_user_growth_stats_by_role():  # Changed function name to match route
         if not previous_start_date or not previous_end_date:
             return Response.error_response(message="Missing previous_start_date or previous_end_date query parameters", status_code=400)
         
-        # Optional: validate dates here or set defaults if missing
-    
+            
         stats = UserService.find_users_growth_stats_by_role_with_comparison(current_start_date=current_start_date, current_end_date=current_end_date,  previous_start_date=previous_start_date, previous_end_date=previous_end_date)
         print(f"User growth stats by role from {current_start_date} to {current_end_date} and {previous_start_date} to {previous_end_date}: {stats}")
         return Response.success_response(stats, message="User growth statistics fetched successfully")
@@ -188,15 +214,19 @@ def get_user_growth_stats_by_role():  # Changed function name to match route
 
 
 
-@admin_bp.route('/users/detail/<user_id>', methods=['GET'])
+@admin_bp.route('/users/detail/<_id>', methods=['GET'])
 @role_required([Role.ADMIN.value])
-def get_user_detail(user_id):
-    """Get detailed information about a user by ID (Admin only)."""
+def get_user_detail(_id):
+    """Get detailed information about a user by ID (Admin only).
+    @param user_id: str
+    @return: UserResponseSchema
+    @throws: Exception
+    """
     try:
 
-        if not user_id:
+        if not _id:
             return Response.error_response(message="User ID is required", status_code=400)
-        user = UserService.find_users_detail(user_id)
+        user = UserService.find_users_detail(_id)
         if not user:
             return Response.not_found_response("User not found")
 
@@ -204,7 +234,7 @@ def get_user_detail(user_id):
         return Response.success_response(user, message="User details fetched successfully", status_code=200)
 
     except Exception as e:
-        logger.exception(f"Error fetching user details for ID {user_id}")  
+        logger.exception(f"Error fetching user details for ID {_id}")  
         return Response.error_response(message=f"Error fetching user details: {str(e)}", status_code=500)
 
 
@@ -212,23 +242,68 @@ def get_user_detail(user_id):
 # @role_required([Role.ADMIN.value])
 # def 
 
-@admin_bp.route('/users/edit-user-detail/<user_id>', methods=['PATCH'])
+@admin_bp.route('/users/edit-user-detail/<_id>', methods=['PATCH'])
 @role_required([Role.ADMIN.value])
-def edit_user_detail(user_id):
-    """Edit user detail (Admin only)."""
+def edit_user_detail(_id):
+    """Edit user detail (Admin only).
+    @param user_id: str
+    @param data: UserUpdateSchema
+    @return: UserResponseSchema
+    @throws: ValidationError
+    @throws: Exception
+    """
     try:
         data = request.get_json()
         if not data:
             return Response.error_response(message="Invalid JSON", status_code=400)
-        if "student_info" in data and "attendance_record" in data["student_info"]:
-            return Response.error_response(message="Editing attendance_record is not supported yet.", status_code=400)
         
-        if not user_id:
+        
+        if not _id:
             return Response.error_response(message="User ID is required", status_code=400)
         
-        updated_user = UserService.edit_user_detail(user_id, data)
+        updated_user = UserService.patch_user_detail(_id, data)
         if not updated_user:
             return Response.not_found_response("User not found or update failed")
         return Response.success_response(updated_user, message="User detail updated successfully")
     except Exception as e:
         return Response.error_response(message=f"Error updating user detail: {str(e)}", status_code=500)
+
+@admin_bp.route('/users/search-user', methods=['POST'])
+@role_required([Role.ADMIN.value])
+def search_user():
+    """Search for users by username or email (Admin only)."""
+    try:
+        data = request.get_json()
+        if not data:
+            return Response.error_response(message="Invalid JSON", status_code=400)
+
+        query = data.get('query', '')
+        page = data.get('page', 1)
+        page_size = data.get('page_size', 10)
+
+        users = UserService.search_user(query, page, page_size)
+        users_serialized = [
+            user.model_dump(mode="json", by_alias=True, exclude_none=True) for user in users
+        ]
+        return Response.success_response(users_serialized, message="Users fetched successfully")
+
+    except Exception as e:
+        return Response.error_response(message=f"Error searching users: {str(e)}", status_code=500)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@admin_bp.route('/openapi.yaml', methods=['GET'])
+def get_openapi_yaml():
+    return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'openapi.yaml')

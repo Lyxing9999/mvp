@@ -3,5 +3,7 @@
         "Backend"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "git.ignoreLimitWarning": true,
+    "postman.settings.dotenv-detection-notification-visibility": false
 }

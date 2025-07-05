@@ -8,7 +8,9 @@ import DateRangeSelector from "~/components/Base/DateRangeSelector.vue";
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold">Select Date Range</h2>
       </div>
-      <DateRangeSelector />
+      <div style="el-primary ">
+        <DateRangeSelector />
+      </div>
     </el-card>
   </div>
 </template>
