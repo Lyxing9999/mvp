@@ -14,3 +14,27 @@ dist/
 
 # Flask logs (optional)
 *.log
+
+# dotenv / secrets
+.env
+.env.*
+
+# IDE/editor configs
+.vscode/
+.idea/
+
+# Unit test cache
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# MongoDB dump (optional if using mongoexport/mongodump)
+dump/
+
+# MacOS system file
+.DS_Store
