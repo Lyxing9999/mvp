@@ -93,7 +93,7 @@ def edit_user(_id):
 @role_required([Role.ADMIN.value])
 def delete_user(_id):
     """Delete a user by ID (Admin only).
-    @param user_id: str
+    @param _id: str
     @return: UserResponseSchema
     @throws: Exception
     """

@@ -59,7 +59,7 @@ class ClassesService:
 
 
 
-    def get_classes_service(self) -> ClassesService:
+    def get_classes_service(self) -> List[ClassesModel]:
         """
         This function is used to get the classes service instance.
         It is used to get the classes service instance.
@@ -75,40 +75,16 @@ class ClassesService:
             >>> from app.db import get_db
             >>> db = get_db()
         """
-        if not isinstance(self, ClassesService):
-            raise ValidationError("Invalid classes service instance.")
-        if not isinstance(self.db, Database):
-            raise ValidationError("Invalid database instance.")
-        return self
+        try:
+            classes = self.db.classes.find()
+            return self._to_classes_list(list(classes))
+        except Exception as e:
+            console.log(f"Failed to get classes: {e}")
+            raise DatabaseError("Error while getting classes.")
 
 
 
 
 
-
-
-    def get_classes_service(db: Database) -> ClassesService:
-        """
-        This function is used to get the classes service instance.
-        It is used to get the classes service instance.
-        Args:
-            db: The database instance.
-        Returns:
-            ClassesService: The classes service instance.
-        Raises:
-            ValidationError: If the input data is invalid.
-            DatabaseError: If the database operation fails.
-        Example:
-            >>> from app.services.classes_service import get_classes_service
-            >>> from app.db import get_db
-            >>> db = get_db()
-            >>> classes_service = get_classes_service(db)
-            >>> classes_service.create_class([{
-            ...     "class_info": {
-            ...         "course_code": "MATH101",
-            ...         "course_title": "Mathematics I",
-            ...         "lecturer": "Dr. John Doe",
-        """
-        return ClassesService(db)
 
 
