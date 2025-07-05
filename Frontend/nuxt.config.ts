@@ -47,6 +47,7 @@ export default defineNuxtConfig({
     ],
   },
   app: {
+    baseURL: "/",
     head: {
       script: [
         {
@@ -71,10 +72,6 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
-    esbuild: {
-      options: {
-        target: "esnext",
-      },
-    },
+    preset: "vercel",
   },
 });

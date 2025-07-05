@@ -1,17 +1,11 @@
 <script lang="ts" setup>
-import { menus } from "~/constants/menus";
-import BaseSideBar from "~/components/Base/BaseSideBar.vue";
-const 
+import { ref } from "vue";
+
+const props = defineProps<{
+  title: string;
+}>();
 </script>
 
 <template>
-  <AppSidebar
-    :is-mobile="false"
-    :is-collapsed="false"
-    :aside-class="asideClass"
-    :logo-container-class="logoContainerClass"
-    :logo-wrapper-class="logoWrapperClass"
-    :logo-img-class="logoImgClass"
-    :menu-items="menuItems"
-  />
+  <div>Sidebar</div>
 </template>

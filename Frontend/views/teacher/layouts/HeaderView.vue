@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import AppHeader from "~/components/layout/AppHeader.vue";
 const headerClass =
   "bg-white shadow px-4 py-2 flex items-center justify-between";
 const leftSectionClass = "flex items-center";
@@ -13,15 +12,5 @@ const userNameClass = "font-medium text-gray-700";
 </script>
 
 <template>
-  <AppHeader
-    :header-class="headerClass"
-    :left-section-class="leftSectionClass"
-    :toggle-button-class="toggleButtonClass"
-    :search-input-class="searchInputClass"
-    :right-section-class="rightSectionClass"
-    :notification-badge-class="notificationBadgeClass"
-    :dark-mode-button-class="darkModeButtonClass"
-    :user-dropdown-trigger-class="userDropdownTriggerClass"
-    :user-name-class="userNameClass"
-  />
+  <div>Header</div>
 </template>
