@@ -128,7 +128,10 @@ const fetchNormal = async () => {
 </script>
 
 <template>
-  <DateRangeSelector @formattedDates="handleRangeChange" />
+  <div class="p-4">
+    <DateRangeSelector @formattedDates="handleRangeChange" />
+  </div>
+
   <StatisticsCards
     v-if="mode === 'growth'"
     :user-count="growthUserCounts"

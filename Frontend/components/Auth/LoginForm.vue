@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
-import schoolLogo from "~/assets/image/ppiu_logo_text.png";
+import schoolLogo from "~/assets/image/school_logo.png";
 import googleIcon from "~/assets/icons/svg/google.svg";
 import { AuthService } from "~/services/authService";
 

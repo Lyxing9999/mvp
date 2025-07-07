@@ -19,7 +19,6 @@ import { CreateUserFormInput } from "~/types/userServiceInterface";
 import EditableColumn from "~/components/TableEdit/EditableColumn.vue";
 import type { AttendanceStatus } from "~/types/models/Attendance";
 import { UserStoreError } from "~/errors/UserStoreError";
-import type { CSSProperties } from "vue";
 const UserDetailDialog = defineAsyncComponent(
   () => import("~/components/TableEdit/UserDetailDialog.vue")
 );

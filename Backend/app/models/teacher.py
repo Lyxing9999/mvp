@@ -5,8 +5,8 @@ from app.utils.pyobjectid import PyObjectId
 from app.utils.objectid import ObjectId  # type: ignore
 
 class TeacherInfoModel(BaseModel):
-    lecturer_id: str | None = None
-    lecturer_name: str | None = None
+    lecturer_id: Optional[str] = None
+    lecturer_name: Optional[str] = None
     subjects: List[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc)) 
     updated_at: Optional[datetime] = None

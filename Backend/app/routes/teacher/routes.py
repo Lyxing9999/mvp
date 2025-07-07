@@ -1,51 +1,50 @@
 from flask import Blueprint, request  # type: ignore
-from app.services.teacher_service import TeacherService
-from app.services.teacher_service import get_teacher_service
+from app.services.teacher_service import MongoTeacherService
 from app.auth.jwt_utils import role_required
 from app.enums.roles import Role
 from app.utils.response_utils import Response  # type: ignore
 from app.utils.objectid import ObjectId # type: ignore
 from app.utils.console import console
 from flask import jsonify , g # type: ignore
-from app.db import get_db # type: ignore
+from app.database.db import get_db # type: ignore
 from app.models.classes  import ClassesModel  
 import logging
+from app.schemas.teacher_schema import TeacherCreateSchema
 from app.utils.exceptions import NotFoundError, ValidationError, DatabaseError
 logger = logging.getLogger(__name__)
+from functools import wraps
 
 
 teacher_bp = Blueprint('teacher', __name__)
 
-def bson_to_str(obj):
-    if isinstance(obj, ObjectId):
-        return str(obj)
-    if isinstance(obj, dict):
-        return {k: bson_to_str(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [bson_to_str(i) for i in obj]
-    return obj
 
 
-
+def with_teacher_service(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        g.teacher_service = MongoTeacherService(get_db())
+        return func(*args, **kwargs)
+    return wrapper
 
 
 @teacher_bp.route('/profile', methods=['GET'])
 @role_required([Role.TEACHER.value])
+@with_teacher_service
 def get_teacher_profile():
     """Get teacher profile (Teacher only)."""
     try:
-        db = get_db()
         user = getattr(g, 'user', None)
         user_id = user.get("id") if user else None
 
         if not user_id:
-            return jsonify({"error": "Missing user ID"}), 401
+            return Response.error_response(
+                message="Missing user ID",
+                status_code=401
+            )
 
-        teacher_service = get_teacher_service(db)
-        teacher_info = teacher_service.get_teacher_by_id(user_id)
+        teacher_info = g.teacher_service.get_teacher_by_id(user_id)
         if not teacher_info:
             return Response.not_found_response("Teacher info not found")
-        print(teacher_info)
         return Response.success_response(
             data=teacher_info.model_dump(mode="json", by_alias=True,  exclude_none=True),
             message="Teacher profile fetched"
@@ -56,13 +55,45 @@ def get_teacher_profile():
             status_code=500
         )
 
+@teacher_bp.route('/create', methods=['POST'])
+@role_required([Role.TEACHER.value])
+@with_teacher_service
+def create_teacher_profile():
+    """Create teacher profile (Teacher only)."""
+    try:
+        user = getattr(g, 'user', None)
+        user_id = user.get("id") if user else None
+        if not user_id:
+            return jsonify({"error": "Missing user ID"}), 401
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        user_data = {
+            "username": data.get("username"),
+            "email": data.get("email"),
+            "password": data.get("password"),
+            "role": Role.TEACHER.value
+        }
+        user_data = TeacherCreateSchema(**user_data).model_dump(by_alias=True)
+        teacher_service = g.teacher_service
+        result = teacher_service.create_teacher(user_data)
+
+        return Response.success_response(
+            data=result.model_dump(mode="json", by_alias=True, exclude_none=True),
+            message="Teacher profile created"
+        )
+    except Exception as e:
+        return Response.error_response(
+            message=f"Error creating teacher profile: {str(e)}",
+            status_code=500
+        )
 
 @teacher_bp.route('/profile', methods=['PATCH'])
 @role_required([Role.TEACHER.value])
-def update_teacher():
+@with_teacher_service
+def patch_teacher_profile():
     """Update teacher profile (Teacher only)."""
     try:
-        db = get_db()
         user = getattr(g, 'user', None)
         user_id = user.get("id") if user else None
         if not user_id:
@@ -72,10 +103,7 @@ def update_teacher():
         if not update_data:
             return jsonify({"error": "No data provided"}), 400
         
-        teacher_service = get_teacher_service(db)
-        
-        print(update_data)
-        updated_teacher = teacher_service.patch_teacher(user_id, update_data)
+        updated_teacher = g.teacher_service.patch_teacher(user_id, update_data)
         
         if not updated_teacher:
             return Response.not_found_response("Teacher info not found or update failed")
@@ -95,6 +123,7 @@ def update_teacher():
 
 @teacher_bp.route('/classes', methods=['GET'])
 @role_required([Role.TEACHER.value])
+@with_teacher_service
 def get_teacher_classes():
     """
     Get all classes assigned to the currently authenticated teacher.
@@ -106,8 +135,10 @@ def get_teacher_classes():
         500: Internal server error
     """
     try:
-        # Extract user ID from JWT context
-        user_id = g.user.get('id')
+        user = getattr(g, 'user', None)
+        user_id = user.get("id") if user else None
+        
+
         if not user_id:
             logger.warning("Missing user ID in JWT context")
             return Response.error_response(
@@ -117,12 +148,7 @@ def get_teacher_classes():
         
         logger.info(f"Fetching classes for teacher ID: {user_id}")
         
-        # Get database connection
-        db = get_db()
-        
-        # Call service layer
-        teacher_service = get_teacher_service(db)
-        classes = teacher_service.get_classes_by_teacher_id(user_id)
+        classes = g.teacher_service.get_classes_by_teacher_id(user_id)
         
         if not classes:
             logger.info(f"No classes found for teacher ID: {user_id}")
@@ -131,7 +157,6 @@ def get_teacher_classes():
                 status_code=404
             )
         
-        # Serialize response data using ClassesModel as hybrid schema
         serialized_classes = [
             ClassesModel.model_validate(cls).model_dump(
                 mode="json",
@@ -175,6 +200,7 @@ def get_teacher_classes():
         
 @teacher_bp.route('/classes/<class_id>', methods=['GET'])
 @role_required([Role.TEACHER.value])
+@with_teacher_service
 def get_class(class_id):
     """Get detailed info for a specific class
     @param class_id: str
@@ -188,6 +214,7 @@ def get_class(class_id):
 
 @teacher_bp.route('/classes/<class_id>/students', methods=['GET'])
 @role_required([Role.TEACHER.value])
+@with_teacher_service
 def get_class_students(class_id):
     """List students enrolled in a class
 
@@ -208,12 +235,21 @@ def mark_attendance():
     """
     pass
 
-
-
 @teacher_bp.route('/attendance/<attendance_id>', methods=['GET'])
 @role_required([Role.TEACHER.value])
-def get_attendance(attendance_id):
-    """View a specific attendance record
+def get_attendance_by_id(attendance_id):
+    """Get attendance for a class by id
+    @param attendance_id: str
+    @return: AttendanceResponseSchema
+    @throws: Exception
+    """
+    pass
+
+
+@teacher_bp.route('/attendance/<attendance_id>', methods=['PATCH'])
+@role_required([Role.TEACHER.value])
+def patch_attendance(attendance_id):
+    """Patch a specific attendance record
 
     @param attendance_id: str
     @return: AttendanceResponseSchema
@@ -267,12 +303,25 @@ def get_notification(notif_id):
     """
     pass
 
-@teacher_bp.route('/feedback', methods=['GET'])
+@teacher_bp.route('/feedback', methods=['POST'])
 @role_required([Role.TEACHER.value])
-def get_feedback():
-    """View feedback history or details
+def submit_feedback():
+    """Send feedback  or comments
 
-    @return: List[FeedbackResponseSchema]
+    @return: FeedbackResponseSchema
+    @throws: Exception
+    """
+    pass
+
+
+
+@teacher_bp.route('/feedback/<feedback_id>', methods=['GET'])
+@role_required([Role.TEACHER.value])
+def get_feedback(feedback_id):
+    """View a specific feedback record
+
+    @param feedback_id: str
+    @return: FeedbackResponseSchema
     @throws: Exception
     """
     pass
