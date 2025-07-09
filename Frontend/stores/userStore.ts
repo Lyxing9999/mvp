@@ -16,11 +16,7 @@ export const useUserStore = defineStore("user", () => {
 
   const fetchUsers = async (): Promise<User[]> => {
     if (loadingStates.fetchUsers) {
-      throw new UserStoreError(
-        "Already loading users...",
-        "ALREADY_LOADING_USERS",
-        null
-      );
+      return users.value;
     }
 
     loadingStates.fetchUsers = true;

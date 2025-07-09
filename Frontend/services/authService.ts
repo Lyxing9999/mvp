@@ -5,11 +5,15 @@ import { UserModel } from "~/models/userModel";
 import { useAuthStore } from "~/stores/authStore";
 import type { AxiosInstance } from "axios";
 import type { User } from "~/types/models/User";
+import { jwtDecode } from "jwt-decode";
 
 export enum UserRole {
   Admin = "admin",
   Teacher = "teacher",
   Student = "student",
+}
+function isUserRole(role: string): role is UserRole {
+  return Object.values(UserRole).includes(role as UserRole);
 }
 
 export class AuthService {
@@ -33,21 +37,35 @@ export class AuthService {
         return;
       }
 
-      const userData = res.data?.data?.user;
       const token = res.data?.data?.access_token;
-      console.log(userData, token);
-      if (!userData || !token) {
-        ElMessage.error("Invalid response from server");
+      if (!token) {
+        ElMessage.error("Invalid response from server: no token");
         return;
       }
 
+      // Decode the token to get user info directly
+      const decodedRaw = jwtDecode(token) as {
+        id: string;
+        role: UserRole;
+        username: string;
+        email?: string;
+      };
+      if (!isUserRole(decodedRaw.role)) {
+        ElMessage.error("Invalid role in token");
+        return;
+      }
+      const decodedUser = {
+        ...decodedRaw,
+        role: decodedRaw.role,
+      } as AuthUser;
+
       const authStore = useAuthStore();
-      authStore.login(token, userData);
 
-      const user = new UserModel(userData as unknown as Partial<User>);
-      console.log("Logged in user:", user.toDict());
+      authStore.login(token, decodedUser);
 
-      this.redirectByRole(user.role);
+      console.log("Logged in user from token:", decodedUser);
+
+      this.redirectByRole(decodedUser.role);
     } catch (err) {
       console.error("Login failed", err);
       ElMessage.error("Login failed, please try again");
@@ -77,7 +95,7 @@ export class AuthService {
     localStorage.removeItem("token");
   }
 
-  private redirectByRole(role: string) {
+  private redirectByRole(role: UserRole) {
     switch (role) {
       case UserRole.Admin:
         this.router.push("/admin/dashboard");

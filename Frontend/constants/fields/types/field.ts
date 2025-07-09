@@ -5,6 +5,7 @@ export enum InputTypeEnum {
   String = "string",
   Email = "email",
   Dict = "dict",
+  Operation = "operation",
 }
 
 export type InputType = `${InputTypeEnum}`;

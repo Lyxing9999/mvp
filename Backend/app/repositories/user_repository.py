@@ -103,7 +103,7 @@ class UserRepositoryImpl(UserRepository):
         @throws: InternalServerError
         """
         try:
-            users_cursor = self.db.users.find()
+            users_cursor = self.collection.find()
             users_list = list(users_cursor)
             return self._to_users(users_list)
         except Exception as e:

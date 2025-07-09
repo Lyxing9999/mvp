@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { Field } from "~/constants/fields/types/field";
+import type { Field } from "~/constants/fields/types/Field";
 
 const props = defineProps<{
   modelValue: boolean;

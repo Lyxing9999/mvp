@@ -1,4 +1,4 @@
-from itertools import count
+
 from flask import request  # type: ignore
 from . import admin_bp
 from app.auth.jwt_utils import role_required
@@ -7,7 +7,6 @@ from app.enums.roles import Role
 from app.utils.response_utils import Response  # type: ignore 
 from app.schemas.user_schema import UserCreateSchema, UserResponseSchema, UserPatchSchema, UserPatchUserDetailSchema, UserDetailResponseSchema
 from pydantic import ValidationError  # type: ignore 
-from app.database.db import get_db
 import logging
 from flask import send_from_directory , g # type: ignore
 from  functools import wraps
@@ -22,26 +21,34 @@ def with_user_service(func):
     return wrapper
 
 
-db = get_db()
-@admin_bp.route('/', methods=['GET'])   
+
+@admin_bp.route('/', methods=['GET'])
 @with_user_service
 @role_required([Role.ADMIN.value])
 def get_all_users():
-    """Fetch all users (Admin only).
-    @return: List[UserResponseSchema]
-    @throws: Exception
+    """
+    Fetch all users (Admin only).
+
+    Returns:
+        JSON response with list of users or error message.
     """
     try:
         users = g.user_service.user_repo.find_all_users()
-
         if not users:
             return Response.success_response(data=[], message="No users found")
 
-        user_data = [user.model_dump(exclude={"password"},by_alias=True) for user in users]
-        return Response.success_response(user_data, message="Users fetched successfully")
- 
+        # Serialize users, exclude sensitive fields like password
+        user_data = [user.model_dump(exclude={"password"}, by_alias=True) for user in users]
+
+        return Response.success_response(data=user_data, message="Users fetched successfully")
+
     except Exception as e:
+        # Log error if possible
+        # logger.error(f"Error fetching users: {e}")
         return Response.error_response(message=f"Error fetching users: {str(e)}", status_code=500)
+
+
+
 
 @admin_bp.route('/users', methods=['POST'])
 @with_user_service
@@ -75,8 +82,8 @@ def create_user():
 
 
 @admin_bp.route('/users/<_id>', methods=['PATCH'])
-@role_required([Role.ADMIN.value])
 @with_user_service
+@role_required([Role.ADMIN.value])
 def patch_user(_id):
     """Edit an existing user (Admin only).
     @param user_id: str
@@ -96,14 +103,17 @@ def patch_user(_id):
         updated_user = g.user_service.patch_user(_id, user_update.model_dump(by_alias=True))
         if not updated_user:
             return Response.not_found_response("User not found or update failed")
-        user_data = UserResponseSchema.model_validate(updated_user, by_alias=True, exclude_none=True, mode="json")
+        user_model = UserResponseSchema.model_validate(updated_user)
+        user_data = user_model.model_dump(by_alias=True, exclude_none=True)
         return Response.success_response(
             user_data,
             message="User updated successfully"
         )
 
     except Exception as e:
+        logger.error(f"Error updating user: {e}", exc_info=True)
         return Response.error_response(message=f"Error updating user: {str(e)}", status_code=500)
+
 
 @admin_bp.route('/users/<_id>', methods=['DELETE'])
 @role_required([Role.ADMIN.value])

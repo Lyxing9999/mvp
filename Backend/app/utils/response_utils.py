@@ -1,36 +1,46 @@
-from flask import jsonify  # type: ignore
-from typing import Any, Dict, Optional, Union
-
+from flask import jsonify
+from typing import Optional, Union, Dict, Any
+from flask.wrappers import Response as FlaskResponse
 
 class Response:
     @staticmethod
     def success_response(
-        data: Optional[Union[Dict, list]] = None,
-        message: str = "Success",
+        data: Optional[Any] = None,
+        message: str = "",
         status_code: int = 200,
-        meta: Optional[Dict[str, Any]] = None,
-    ):
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> FlaskResponse:
         """
-        Returns a standardized success response.
+        Return a successful JSON response.
+        :param data: Payload data (any JSON-serializable)
+        :param message: Optional message string
+        :param status_code: HTTP status code (default 200)
+        :param metadata: Optional additional metadata (e.g., pagination)
+        :return: Flask JSON Response
         """
         response = {
             "success": True,
             "message": message,
-            "data": data if data is not None else {},
+            "data": data,
         }
-        if meta:
-            response["meta"] = meta  
-
-        return jsonify(response), status_code
+        if metadata:
+            response["metadata"] = metadata
+        resp = jsonify(response)
+        resp.status_code = status_code
+        return resp
 
     @staticmethod
     def error_response(
         message: str = "An error occurred",
         status_code: int = 400,
-        errors: Optional[Union[Dict, str]] = None,
-    ):
+        errors: Optional[Union[str, Dict[str, Any]]] = None
+    ) -> FlaskResponse:
         """
-        Returns a standardized error response.
+        Return a generic error JSON response.
+        :param message: Error message string
+        :param status_code: HTTP status code (default 400)
+        :param errors: Optional detailed error info (string or dict)
+        :return: Flask JSON Response
         """
         response = {
             "success": False,
@@ -38,24 +48,46 @@ class Response:
         }
         if errors:
             response["errors"] = errors
-
-        return jsonify(response), status_code
+        resp = jsonify(response)
+        resp.status_code = status_code
+        return resp
 
     @staticmethod
-    def not_found_response(message: str = "Resource not found"):
+    def validation_error_response(
+        errors: Union[str, Dict[str, Any]],
+        message: str = "Validation error"
+    ) -> FlaskResponse:
+        """
+        Return a validation error JSON response (HTTP 422).
+        :param errors: Detailed validation errors
+        :param message: Optional message (default "Validation error")
+        :return: Flask JSON Response
+        """
+        return Response.error_response(message=message, status_code=422, errors=errors)
+
+    @staticmethod
+    def not_found_response(
+        message: str = "Resource not found"
+    ) -> FlaskResponse:
+        """
+        Return a 404 Not Found JSON response.
+        """
         return Response.error_response(message=message, status_code=404)
 
     @staticmethod
-    def unauthorized_response(message: str = "Unauthorized"):
+    def unauthorized_response(
+        message: str = "Unauthorized"
+    ) -> FlaskResponse:
+        """
+        Return a 401 Unauthorized JSON response.
+        """
         return Response.error_response(message=message, status_code=401)
 
     @staticmethod
-    def forbidden_response(message: str = "Forbidden"):
+    def forbidden_response(
+        message: str = "Forbidden"
+    ) -> FlaskResponse:
+        """
+        Return a 403 Forbidden JSON response.
+        """
         return Response.error_response(message=message, status_code=403)
-
-    @staticmethod
-    def validation_error_response(errors: Union[Dict[str, Any], str], message: str = "Validation failed"):
-        """
-        Use when returning schema/field validation errors.
-        """
-        return Response.error_response(message=message, status_code=422, errors=errors)

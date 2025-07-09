@@ -1,4 +1,4 @@
-import type { Field } from './types/field';
+import type { Field } from "./types/Field";
 export const teacherFields: Field[] = [
   { label: "Phone Number", key: "phone_number", type: "string" },
   {

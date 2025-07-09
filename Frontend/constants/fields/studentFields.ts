@@ -1,4 +1,4 @@
-import type { Field } from './types/field';
+import type { Field } from "./types/Field";
 
 export const studentFields: Field[] = [
   { label: "Student ID", key: "student_info.student_id", type: "string" },
@@ -8,10 +8,14 @@ export const studentFields: Field[] = [
     key: "student_info.class_ids",
     isArray: true,
     type: "string",
-
   },
   { label: "Major", key: "student_info.major", type: "string" },
-  { label: "Birth Date", key: "student_info.birth_date", isDate: true, type: "date" },
+  {
+    label: "Birth Date",
+    key: "student_info.birth_date",
+    isDate: true,
+    type: "date",
+  },
   { label: "Batch", key: "student_info.batch", type: "string" },
   { label: "Address", key: "student_info.address", type: "string" },
   { label: "Phone Number", key: "student_info.phone_number", type: "string" },
@@ -35,7 +39,21 @@ export const studentFields: Field[] = [
     type: "string",
   },
   { label: "Current GPA", key: "student_info.current_gpa", type: "float" },
-  { label: "Remaining Credits", key: "student_info.remaining_credits", type: "float" },
-  { label: "Created At", key: "student_info.created_at", isDate: true, type: "date" },
-  { label: "Updated At", key: "student_info.updated_at", isDate: true, type: "date" },
+  {
+    label: "Remaining Credits",
+    key: "student_info.remaining_credits",
+    type: "float",
+  },
+  {
+    label: "Created At",
+    key: "student_info.created_at",
+    isDate: true,
+    type: "date",
+  },
+  {
+    label: "Updated At",
+    key: "student_info.updated_at",
+    isDate: true,
+    type: "date",
+  },
 ];

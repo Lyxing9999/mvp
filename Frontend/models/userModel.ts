@@ -29,6 +29,7 @@ export class UserModel implements User {
     if (this.email) result.email = this.email;
     if (this.createdAt) result.created_at = this.createdAt;
     if (includePassword && this.password) result.password = this.password;
+
     return result;
   }
 }

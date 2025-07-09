@@ -172,13 +172,15 @@ class MongoUserService(UserService):
                 raise BadRequestError(f"Username {update_data['username']} already taken by another user")
 
         if "email" in update_data:
-            conflict = self.collection.find_one({
-                "email": update_data["email"],
-                "_id": {"$ne": _id}  
-            })
-            if conflict:
-                logger.error(f"Email {update_data['email']} already taken by another user")
-                raise BadRequestError(f"Email {update_data['email']} already taken by another user")
+            if update_data["email"] is not None and update_data["email"] != "":
+                conflict = self.collection.find_one({
+                    "email": update_data["email"],
+                    "_id": {"$ne": _id}
+                })
+                if conflict:
+                    logger.error(f"Email {update_data['email']} already taken by another user")
+                    raise BadRequestError(f"Email {update_data['email']} already taken by another user")
+
         try:
             UserModel.model_validate(existing_user)
         except Exception as e:

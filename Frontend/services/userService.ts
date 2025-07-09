@@ -10,13 +10,11 @@ import { UserStoreError } from "~/errors/UserStoreError";
 export class UserService {
   private $api = useNuxtApp().$api as AxiosInstance;
   private baseURL = "/api/admin/";
-
   async listUsers(): Promise<User[]> {
     const res = await this.$api.get<{ data: User[] }>(this.baseURL);
     if (res.data.data.length === 0) {
       throw new UserStoreError("No users found", "NO_USERS_FOUND", null);
     }
-
     return res.data.data;
   }
 

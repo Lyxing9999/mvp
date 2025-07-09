@@ -97,7 +97,15 @@ export type UserDetail =
   | { profile: Profile & { role: "student" }; student_info: StudentType }
   | { profile: Profile & { role: "teacher" }; teacher_info: TeacherType }
   | { profile: Profile & { role: "admin" }; admin_info: AuthUserType };
-export enum CreateUserFormInput {
+
+export type UserFormInput = {
+  username: string;
+  email?: string;
+  password: string;
+  role: string;
+};
+
+export enum CreateUserFormFields {
   Username = "username",
   Email = "email",
   Password = "password",
