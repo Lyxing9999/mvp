@@ -1,19 +1,23 @@
 from typing import Optional
-from pydantic import BaseModel , Field # type: ignore
-from app.enums.day import Day, Shift
-from app.utils.objectid import ObjectId # type: ignore
-from datetime import time # type: ignore
- 
+from pydantic import BaseModel, Field
+from datetime import time
+from app.utils.pyobjectid import PyObjectId
+
+
+
 class ScheduleItemModel(BaseModel):
-    id: Optional[str] = Field(default_factory=lambda: str(ObjectId()), alias="_id")
-    day: Day
-    shift: Shift
+    _collection_name = "schedule"
+    
+        
+    id: Optional[PyObjectId] = Field(None, alias="_id")
+    location: Optional[str] = None
+    shift: Optional[str] = None  # keep optional
     start_time: time = Field(..., description="Format: HH:MM")
     end_time: time = Field(..., description="Format: HH:MM")
-    room: str
-    
+    room: Optional[str] = None   # make room optional
+
     model_config = {
-        "extra": "forbid",
+        "extra": "allow",
         "from_attributes": True,
         "use_enum_values": True,
     }

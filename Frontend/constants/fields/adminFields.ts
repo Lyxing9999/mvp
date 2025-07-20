@@ -1,4 +1,4 @@
-import type { Field } from "./types/field";
+import type { Field } from "./types/Field";
 
 export const adminFields: Field[] = [
   { label: "Phone Number", key: "admin_info.phone_number", type: "string" },

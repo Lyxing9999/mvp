@@ -7,8 +7,7 @@ export interface TeacherInfo {
 }
 
 export interface Teacher {
-  _id?: string;
-  user_id: string;
+  _id: string;
   phone_number?: string;
   teacher_info: TeacherInfo;
 }

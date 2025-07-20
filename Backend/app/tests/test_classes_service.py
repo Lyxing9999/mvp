@@ -2,13 +2,8 @@ import pytest
 from app.services.classes_service import ClassesService
 from app.models.classes import ClassesModel
 from app.utils.exceptions import ValidationError
-from mongomock import MongoClient
+from mongomock import MongoClient 
 from bson import ObjectId
-import os
-import sys
-
-# Optional: make sure `app` is in path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 @pytest.fixture
 def mock_db():

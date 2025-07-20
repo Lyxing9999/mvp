@@ -1,9 +1,8 @@
 export enum Role {
-  teacher = "teacher",
-  student = "student",
-  Admin = "admin",
+  TEACHER = "teacher",
+  STUDENT = "student",
+  ADMIN = "admin",
 }
-
 
 export interface User {
   _id: string;
@@ -13,5 +12,6 @@ export interface User {
   password?: string;
   createdAt?: string;
   created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
 }
-

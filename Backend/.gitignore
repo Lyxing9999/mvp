@@ -6,7 +6,7 @@ __pycache__/
 venv/
 env/
 instance/
-
+.venv/
 # Python packaging/build
 *.egg-info/
 build/

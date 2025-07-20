@@ -1,15 +1,13 @@
 import type { AxiosInstance } from "axios";
-import { useNuxtApp } from "nuxt/app";
-
 import type { User } from "~/types/models/User";
-
 import type { Role } from "~/types/models/User";
-import type { UserDetail } from "~/types/userServiceInterface";
+import type { RoleDataMap, UserDetail } from "~/types/userServiceInterface";
 import { UserStoreError } from "~/errors/UserStoreError";
+import type { UserDetailResponse } from "~/types/userServiceInterface";
 
 export class UserService {
-  private $api = useNuxtApp().$api as AxiosInstance;
   private baseURL = "/api/admin/";
+  constructor(private $api: AxiosInstance) {}
 
   async listUsers(): Promise<User[]> {
     const res = await this.$api.get<{ data: User[] }>(this.baseURL);
@@ -20,8 +18,10 @@ export class UserService {
     return res.data.data;
   }
 
-  async getUserDetails(id: string): Promise<UserDetail> {
-    const res = await this.$api.get<{ data: UserDetail }>(
+  async getUserDetails<T extends keyof RoleDataMap = keyof RoleDataMap>(
+    id: string
+  ): Promise<UserDetailResponse<T>> {
+    const res = await this.$api.get<{ data: UserDetailResponse<T> }>(
       `${this.baseURL}users/detail/${id}`
     );
 
@@ -32,6 +32,7 @@ export class UserService {
         res.data.data
       );
     }
+
     return res.data.data;
   }
 
@@ -44,21 +45,18 @@ export class UserService {
         res.data.data
       );
     }
-    console.log("res", res);
     return res;
   }
   async updateUser(id: string, userData: any) {
-    const res = await this.$api.patch(`${this.baseURL}users/${id}`, userData);
-    if (!res.data.data) {
-      throw new UserStoreError(
-        `Failed to update user`,
-        "UPDATE_USER_FAILED",
-        res.data
-      );
-    }
-    return res.data.data;
-  }
+    try {
+      const res = await this.$api.patch(`${this.baseURL}users/${id}`, userData);
+      return res.data.data;
+    } catch (error: any) {
+      console.error("Server error:", error.response?.data);
 
+      throw error;
+    }
+  }
   async deleteUser(id: string) {
     try {
       const res = await this.$api.delete(`${this.baseURL}users/${id}`);

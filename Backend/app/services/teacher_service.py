@@ -1,293 +1,194 @@
 import logging
 from typing import Optional, List, Dict, Any, Union
-from app.services.user_service import UserService  # type: ignore
 from pymongo.database import Database # type: ignore
 from bson import ObjectId  # type: ignore
-from bson.errors import InvalidId  # type: ignore
-from app.models.teacher import TeacherModel, TeacherInfoModel  # type: ignore
+from app.models.teacher import TeacherModel  # type: ignore
 from app.models.classes import ClassesModel  # type: ignore
-from app.models.student import StudentModel  # type: ignore
-from app.utils.dict_utils import flatten_dict # type: ignore
-from datetime import datetime, timezone # type: ignore
-from app.utils.exceptions import NotFoundError, ValidationError, DatabaseError, AuthenticationError, BadRequestError, InternalServerError, UnauthorizedError, ForbiddenError # type: ignore 
+from app.models.user import UserModel
+from abc import ABC, abstractmethod
+from app.error.exceptions import AppBaseException,ExceptionFactory, ValidationError, InternalServerError, NotFoundError, DatabaseError
 logger = logging.getLogger(__name__)
 from pymongo import ReturnDocument # type: ignore
+from app.utils.model_utils import default_model_utils
+from app.enums.roles import Role
+from app.models.feedback import FeedbackModel
+class TeacherService(ABC):
+    pass
+    # @abstractmethod
+    # def create_teacher(self, data: Dict[str, Any]) -> Optional[UserModel]:
+    #     pass
 
-class TeacherService:
-    def __init__(self, db: Database):
+    # @abstractmethod
+    # def get_teacher_by_id(self, _id: ObjectId) -> Optional[TeacherModel]:
+    #     pass
+
+    # @abstractmethod
+    # def patch_teacher(self, _id: ObjectId, update_data: Dict[str, Any]) -> Optional[TeacherModel]:
+    #     pass
+
+    # @abstractmethod
+    # def delete_teacher(self, _id: ObjectId | str) -> bool:
+    #     pass
+
+    @abstractmethod
+    def teacher_create_classes(self, data: Dict[str, Any]) -> Optional[ClassesModel]:
+        pass
+class MongoTeacherService(TeacherService):
+    def __init__(self, db: Database, collection_name: str = TeacherModel._collection_name):   
         self.db = db
-        self.user_service = UserService()
-        self.collection = self.db.teacher_info
+        self.collection = self.db[collection_name]
+        self.model_utils = default_model_utils
+        self._classes_service = None
+        self._user_service = None
+        self._feedback_service = None
 
-    def _to_teacher(self, data: Optional[Dict[str, Any]]) -> Optional[TeacherModel]:
-        if not isinstance(data, dict) or not data:
-            return None
-         
-        try:
-            return TeacherModel(**data)
-        except Exception as e:
-            logger.warning(f"Failed to convert data to TeacherModel: {e}")
-            return None
+    @property
+    def classes_service(self):
+        if self._classes_service is None:
+            from app.services.classes_service import get_classes_service
+            self._classes_service = get_classes_service(self.db)
+        return self._classes_service
+    
+    @property
+    def user_service(self):
+        if self._user_service is None:
+            from app.services.user_service import get_user_service 
+            self._user_service = get_user_service(self.db)
+        return self._user_service
+    
+    @property
+    def feedback_service(self):
+        if self._feedback_service is None:
+            from app.services.feedback_service import MongoFeedbackService
+            self._feedback_service = MongoFeedbackService(self.db)
+        return self._feedback_service
+
+
+    def _to_teacher(self, data: Dict[str, Any]) -> Optional[TeacherModel]:
+        return self.model_utils.to_model(data, TeacherModel)
 
     def _to_teachers(self, data_list: List[Dict[str, Any]]) -> List[TeacherModel]:
-        return [teacher for data in data_list if (teacher := self._to_teacher(data))]
-    def _to_classes(self, data: Optional[Dict[str, Any]]) -> Optional[ClassesModel]:
-        if not isinstance(data, dict) or not data:
-            return None
-        return ClassesModel(**data)
+        return self.model_utils.to_model_list(data_list, TeacherModel)  
+
+    def _is_non_empty_dict(self, data: Dict[str, Any]) -> bool:
+        return isinstance(data, dict) and bool(data)
+
+    def _to_classes(self, data: Dict[str, Any]) -> Optional[ClassesModel]:
+        return self.classes_service._to_classes(data)
     
     def _to_classes_list(self, data_list: List[Dict[str, Any]]) -> List[ClassesModel]:
-        return [classes for data in data_list if (classes := self._to_classes(data))]
+        return self.classes_service._to_classes_list(data_list)
+
+    def _check_dict(self, data: Dict[str, Any]) -> None:
+        if not isinstance(data, dict) or not data:
+            raise ValidationError(
+                message="Data must be a non-empty dictionary",
+                details=data,
+                user_message="Invalid input data"
+            )
+
+    def _convert_to_response_model(self, data: Dict[str, Any]) -> Optional[TeacherModel]:
+        return self.model_utils.convert_to_response_model(data, TeacherModel)
+    
     def _to_objectid(self, id_val: Union[str, ObjectId]) -> Optional[ObjectId]:
-        if isinstance(id_val, ObjectId):
-            return id_val
-        try:
-            return ObjectId(id_val)
-        except Exception as e:
-            logger.error(f"Invalid ObjectId: {e}")
-            return None
-
-    def create_teacher(self, data: Dict[str, Any]) -> Optional[TeacherModel]:
-
-        try:
-            teacher = self._to_teacher(data)
-            if not teacher:
-                raise ValueError("Invalid teacher data provided")
+        return self.model_utils.validate_object_id(id_val)
     
-            user_result = self.user_service.create_user(teacher.model_dump())
-            
-            if not user_result or not user_result.get("status"):
-                logger.error(f"Failed to create user for teacher: {user_result}")
-                return None
-            created_user = user_result.get("user")
-            return self._to_teacher(created_user) if created_user else None
-            
-        except Exception as e:
-            logger.error(f"Error creating teacher: {str(e)}")
+    def _prepare_safe_update(self, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        return self.model_utils.prepare_safe_update(update_data)
+
+    def create_teacher(self, data: dict) -> Optional[UserModel]:
+        self._check_dict(data)
+        data["role"] = Role.TEACHER.value
+        user_model = self.user_service.create_user(data)
+        return user_model
+
+    def get_teacher_by_id(self, _id: Union[str, ObjectId]) -> TeacherModel:
+        try:
+            validated_id = self._to_objectid(_id)
+            result = self.collection.find_one({"_id": validated_id})
+            if not result:
+                raise ExceptionFactory.not_found(resource_type="Teacher", resource_id=str(_id))
+            return self._convert_to_response_model(result)           
+        except AppBaseException:
             raise
-
-    def get_teacher_by_id(self, teacher_id: ObjectId) -> Optional[TeacherModel]:
-
-        try:
-            if not self._to_objectid(teacher_id):
-                logger.warning(f"Invalid teacher ID format: {teacher_id}")
-                return None
-            
-            result = self.collection.find_one({"_id": teacher_id})
-            return self._to_teacher(result)
-            
         except Exception as e:
-            logger.error(f"Error fetching teacher {teacher_id}: {str(e)}")
-            return None
+            raise InternalServerError(
+                message="Unexpected error occurred while fetching teacher",
+                cause=e
+        )
 
-    def get_all_teachers(self, page: int = 1, page_size: int = 10) -> List[TeacherModel]:
+
+    def patch_teacher(self, _id: ObjectId, update_data: Dict[str, Any]) -> Optional[TeacherModel]:
         try:
-            skip = (page - 1) * page_size
-            cursor = self.collection.find().skip(skip).limit(page_size)
-            results = list(cursor)
-            return self._to_teachers(results)
-            
-        except Exception as e:
-            logger.error(f"Error fetching teachers: {str(e)}")
-            return []
-
-    def patch_teacher(self, teacher_id: ObjectId, update_data: Dict[str, Any]) -> Optional[TeacherModel]:
-
-        try:
-            if not self._to_objectid(teacher_id):
-                logger.warning(f"Invalid teacher ID format: {teacher_id}")
-                return None
-            blacklist = {"_id", "role", "user_id", "userId", "created_at", "updated_at"}
-            allowed_top_level_keys = set(TeacherModel.model_fields.keys())
-            allowed_teacher_info_keys = set(TeacherInfoModel.model_fields.keys())
-            safe_update: Dict[str, Any] = {}
-            for key, value in update_data.items():
-                if key in blacklist or value is None:
-                    continue
-                if key in allowed_top_level_keys and key != "teacher_info":
-                    safe_update[key] = value
-                elif key == "teacher_info" and isinstance(value, dict):
-                    for sub_key, sub_value in value.items():
-                        if sub_key in allowed_teacher_info_keys and sub_value is not None:
-                            safe_update[f"teacher_info.{sub_key}"] = sub_value
-
+            validated_id = self._to_objectid(_id)
+            if not validated_id:
+                raise ExceptionFactory.validation_failed(field="_id", value=_id, reason="Invalid teacher ID format")
+            safe_update = self._prepare_safe_update(update_data)
+            if "teacher_info" in safe_update and isinstance(safe_update["teacher_info"], dict):
+                teacher_info_updates = safe_update.pop("teacher_info")
+                for key, value in teacher_info_updates.items():
+                    safe_update[f"teacher_info.{key}"] = value
             if not safe_update:
-                logger.warning("No valid update data provided")
-                return None
-    
+                raise ExceptionFactory.validation_failed(field="update_data", value=update_data, reason="No valid update data provided")
 
             result = self.collection.find_one_and_update(
-                {"_id": teacher_id},
+                {"_id": validated_id},
                 {"$set": safe_update},
                 return_document=ReturnDocument.AFTER
             )
 
-            return self._to_teacher(result)
-            
+            return self._convert_to_response_model(result)
+
+        except AppBaseException:
+            raise 
         except Exception as e:
-            logger.error(f"Error updating teacher {teacher_id}: {str(e)}")
-            return None
-
-    def update_teacher(self, teacher_id: ObjectId, update_data: Dict[str, Any]) -> Optional[TeacherModel]:
-
-        try:
-            if not self._to_objectid(teacher_id):
-                logger.warning(f"Invalid teacher ID format: {teacher_id}")
-                return None
-            
-            clean_data = flatten_dict(update_data)
-            if not clean_data:
-                logger.warning("No valid update data provided")
-                return None
-            
-            result = self.collection.find_one_and_update(
-                {"_id": teacher_id},
-                {"$set": clean_data},
-                return_document=ReturnDocument.AFTER
+            raise InternalServerError(
+                message="Unexpected error occurred while updating teacher",
+                cause=e
             )
-            
-            return self._to_teacher(result)
-            
-        except Exception as e:
-            logger.error(f"Error updating teacher {teacher_id}: {str(e)}")
-            return None
 
-    def delete_teacher(self, user_id: ObjectId | str) -> bool:
+
+    def delete_teacher(self, _id: Union[ObjectId, str]) -> bool:
+        validated_id = self._to_objectid(_id)
         try:
-            if not self._to_objectid(user_id):
-                logger.warning(f"Invalid teacher ID format: {user_id}")
-                return False
-            
-            result = self.collection.delete_one({"_id": user_id.id})
+            result = self.collection.delete_one({"_id": validated_id})
             return result.deleted_count > 0 if result else False
-            
-        except Exception as e:
-            logger.error(f"Error deleting teacher {user_id}: {str(e)}")
-            return False
-
-    def search_teachers(self, query: str, page: int = 1, page_size: int = 10) -> List[TeacherModel]:
-
-        try:
-            if not query or not query.strip():
-                return []
-            
-            skip = (page - 1) * page_size
-            search_filter = {
-                "$or": [
-                    {"name": {"$regex": query, "$options": "i"}},
-                    {"email": {"$regex": query, "$options": "i"}},
-                    {"username": {"$regex": query, "$options": "i"}}
-                ]
-            }
-            
-            cursor = self.collection.find(search_filter).skip(skip).limit(page_size)
-            results = list(cursor)
-            return self._to_teachers(results)
-            
-        except Exception as e:
-            logger.error(f"Error searching teachers with query '{query}': {str(e)}")
-            return []
-
-    def get_teacher_count(self) -> int:
-
-        try:
-            return self.collection.count_documents({})
-        except Exception as e:
-            logger.error(f"Error counting teachers: {str(e)}")
-            return 0
-
-    def get_teachers_by_subject(self, subject: str) -> List[TeacherModel]:
-
-        try:
-            if not subject or not subject.strip():
-                return []
-            
-            cursor = self.collection.find({"subjects": {"$in": [subject]}})
-            results = list(cursor)
-            return self._to_teachers(results)
-            
-        except Exception as e:
-            logger.error(f"Error fetching teachers by subject '{subject}': {str(e)}")
-            return []
-
-    def get_classes_by_teacher_id(self, user_id: ObjectId | str) -> List[ClassesModel]:
-        """
-        Get all classes assigned to the teacher.
-
-        Raises:
-            NotFoundError: If teacher not found or has no classes
-            ValidationError: If teacher_id is invalid
-            DatabaseError: On database failure
-        """
-        try:
-            user_id = self._to_objectid(user_id)
-            if not user_id:
-                raise ValidationError("Invalid teacher ID format")
-
-            teacher = self.collection.find_one({"_id": user_id})
-            if not teacher:
-                raise NotFoundError("Teacher not found")
-
-            class_ids = teacher.get("classes", [])
-            if not class_ids:
-                raise NotFoundError("No classes found for this teacher")
-
-            class_cursor = self.db.classes.find({"_id": {"$in": class_ids}})
-            class_docs = list(class_cursor)
-            return self._to_classes_list(class_docs)
-
-        except ValidationError as e:
-            logger.warning(str(e))
+        
+        except AppBaseException:
             raise
-
-        except NotFoundError as e:
-            logger.info(str(e))
-            raise
-
         except Exception as e:
-            logger.error(f"Error fetching classes by teacher ID {user_id}: {str(e)}")
-            raise DatabaseError("Failed to fetch teacher classes")
+            raise InternalServerError(
+                message="Unexpected error occurred while deleting teacher",
+                cause=e
+            )
+
+    def find_all_classes(self) -> List[ClassesModel]:
+        logger.info('receive from find_all_classes')
+        return self.classes_service.find_all_classes()
     
-
     
-    def get_class_by_id(self, _id: List[ClassesModel]) -> Optional[ClassesModel]:
-        """
-        Get a class by its ID.
-        :return: ClassesModel
-        :raises: NotFoundError, ValidationError, DatabaseError
-        """
-        try:
-            _id = self._to_objectid(_id)
+    def find_classes_by_teacher_id(self, _id: Union[ObjectId, str]) -> List[ClassesModel]:
+        logger.info('receive from find_classes_by_teacher_id', _id)
+        return self.classes_service.find_classes_by_teacher_id(_id)
+    
+    def find_classes_by_id(self, _id: Union[ObjectId, str]) -> ClassesModel:
 
-            if not _id:
-                raise ValidationError("Invalid class ID format")
-            
-            result = self.db.classes.find_one({"_id": _id})
-
-            return self._to_classes(result) if result else None
-
-        except ValidationError as e:
-            logger.warning(str(e))
-            raise
-        except Exception as e:
-            logger.error(f"Error fetching class by ID {_id}: {str(e)}")
-            raise DatabaseError("Failed to fetch class")
+        return self.classes_service.find_classes_by_id(_id)
 
 
+    def teacher_create_classes(self, _id: Union[ObjectId, str], class_data: Dict[str, Any]) ->  Optional[ClassesModel]:
+        return self.classes_service.create_classes(_id, class_data)
 
+    def teacher_update_class(self, _id: Union[ObjectId, str], class_data: Dict[str, Any]) ->  ClassesModel:
+        logger.info('receive from teacher_update_class', class_data)
+        return self.classes_service.update_classes(_id, class_data)
 
+    def teacher_create_feedback(self,feedback_data: Dict[str, Any]) -> Optional[FeedbackModel]:
+        logger.info('receive from teacher_create_feedback', feedback_data)
+        return self.feedback_service.create_feedback(feedback_data)
 
-
-
-
-
-
-
-
-
-
-def get_teacher_service(db: Database) -> TeacherService:
-    return TeacherService(db)
+def get_teacher_service(db: Database) -> MongoTeacherService:
+    return MongoTeacherService(db)
 
 
 

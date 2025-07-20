@@ -1,87 +1,101 @@
-from bson import ObjectId  # type: ignore
-from app.db import get_db
-from typing import Optional , List  
+from app.utils.objectid import ObjectId
+from typing import Optional , List, Dict, Any, Union
 from app.models.grade import GradeModel
 from pymongo.errors import PyMongoError # type: ignore
-db = get_db()
-class GradeService:
-    @staticmethod
-    def _to_grade(data: Optional[dict]) -> Optional[GradeModel]:
-        if not isinstance(data, dict):
-            return None
-        return GradeModel(**data)
+from pymongo.database import Database # type: ignore
+from app.error.exceptions import NotFoundError, ValidationError, DatabaseError, AuthenticationError, BadRequestError, InternalServerError, UnauthorizedError, ForbiddenError, ExceptionFactory, AppBaseException, ErrorSeverity, ErrorCategory # type: ignore
+from abc import ABC, abstractmethod
+from app.utils.model_utils import default_model_utils
+from app.utils.pyobjectid import PyObjectId
+import logging
 
-    @staticmethod
-    def create_grade(data: dict) -> dict:
+logger = logging.getLogger(__name__)
+
+class GradeService(ABC):
+    @abstractmethod
+    def create(self, student_id: PyObjectId, class_id: PyObjectId, data: Dict[str, Any]) -> Optional[GradeModel]: 
+        pass
+
+    @abstractmethod
+    def get_by_student_class(self, student_id: str, class_id: str) -> Optional[GradeModel]: 
+        pass
+
+    @abstractmethod
+    def update(self, grade_id: str, update_data: dict) -> GradeModel: 
+        pass
+
+    @abstractmethod
+    def delete(self, grade_id: str) -> GradeModel: 
+        pass
+
+
+class MongoGradeService(GradeService):
+    def __init__(self, db: Database):
+        self.db = db
+        self.model_utils = default_model_utils
+        self.collection = self.db.grades
+
+    def _to_grade(self, data: Dict[str, Any]) -> Optional[GradeModel]:
+        return self.model_utils.to_model(data, GradeModel)
+
+    def _to_grade_list(self, data_list: List[Dict[str, Any]]) -> List[GradeModel]:
+        return self.model_utils.to_model_list(data_list, GradeModel)
+
+    def _to_objectid(self, id_val: Union[str, ObjectId]) -> Optional[ObjectId]:
+        return self.model_utils.validate_object_id(id_val)
+
+    def _prepare_safe_update(self, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        return self.model_utils.prepare_safe_update(update_data)
+    
+    def _convert_to_response_model(self, data: Dict[str, Any]) -> Optional[GradeModel]:
+        return self.model_utils.convert_to_response_model(data, GradeModel)
+
+
+    def create_grade(self, student_id: ObjectId, teacher_id: ObjectId, class_id: ObjectId, course_id: ObjectId, data: Dict[str, Any]) -> Optional[GradeModel]:
+        ids = {
+            "student_id": student_id,
+            "teacher_id": teacher_id,
+            "class_id": class_id,
+            "course_id": course_id
+        }
+        validated_ids = {}
+        for field, id_val in ids.items():
+            validated_id = self._to_objectid(id_val)
+            if not validated_id:
+                raise ExceptionFactory.validation_failed(field=field, value=id_val, reason=f"Invalid {field} format")
+            validated_ids[field] = validated_id
+
         try:
-            grade = GradeModel(**data)
-            doc = grade.to_dict()
-            result = db.grades.insert_one(doc)
-            return {"_id": str(result.inserted_id), **doc}
-        except PyMongoError as e:
-            raise Exception("Database insert failed") from e
-    
-    @staticmethod
-    def get_grade_by_student_class(student_id: str, class_id: str) -> Optional[GradeModel]:
-        if not student_id or not class_id:
-            return None
-        grade_data = db.grades.find_one({"student_id": student_id, "class_id": class_id})
-        return GradeService._to_grade(grade_data)
+            data.update(validated_ids)
+            
+            grade = self._to_grade(data)
+            if not grade:
+                raise ExceptionFactory.validation_failed(field="data", value=data, reason="Invalid grade data")
 
-    @staticmethod
-    def update_grade(grade_id: str, update_data: dict) -> dict:
-        try:
-            result = db.grades.update_one(
-                {"_id": ObjectId(grade_id)},
-                {"$set": update_data}
-            )
-            if result.matched_count == 0:
-                return {"msg": "Grade not found"}
-            return {"msg": "Grade updated successfully"}
-        except PyMongoError as e:
-            raise Exception("Failed to update grade") from e
+            result = self.collection.insert_one(grade.model_dump(by_alias=True))
+            if not result.acknowledged:
+                raise InternalServerError("Insert failed")
+            to_doc = self.collection.find_one({"_id": result.inserted_id})
+            return self._convert_to_response_model(to_doc) if to_doc else None
 
-    @staticmethod
-    def delete_grade(grade_id: str) -> dict:
-        try:
-            result = db.grades.delete_one({"_id": ObjectId(grade_id)})
-            if result.deleted_count == 0:
-                return {"msg": "Grade not found"}
-            return {"msg": "Grade deleted successfully"}
-        except PyMongoError as e:
-            raise Exception("Failed to delete grade") from e
+        except AppBaseException:
+            raise
+        except Exception as e:
+            raise InternalServerError("Failed to create grade", cause=e)
 
-    @staticmethod
-    def get_grades_by_student_id(student_id: str) -> List[GradeModel]:
-        if not student_id:
-            return []
-        grades_data = db.grades.find({"student_id": student_id})
-        return [GradeService._to_grade(grade) for grade in grades_data]
+    def get_grade_by_id(self, _id: Union[str, ObjectId]) -> Optional[GradeModel]:
+        validated_id = self._to_objectid(_id)
+        result =  self.collection.find_one({"_id": validated_id})
+        if not result:
+            raise NotFoundError(message="Grade not found", severity=ErrorSeverity.HIGH, category=ErrorCategory.DATABASE, status_code=404)
+        return self._convert_to_response_model(result)
     
-    @staticmethod
-    def get_grades_by_class_id(class_id: str) -> List[GradeModel]:
-        if not class_id:
-            return []
-        grades_data = db.grades.find({"class_id": class_id})
-        return [GradeService._to_grade(grade) for grade in grades_data]
+    def get_grade_by_student_class(self, student_id: str, class_id: str) -> Optional[GradeModel]:
+        pass
     
-    @staticmethod
-    def get_grades_by_student_id_and_class_id(student_id: str, class_id: str) -> List[GradeModel]:
-        if not student_id or not class_id:
-            return []
-        grades_data = db.grades.find({"student_id": student_id, "class_id": class_id})
-        return [GradeService._to_grade(grade) for grade in grades_data]
-    
-    @staticmethod
-    def get_grades_by_student_id_and_course_id(student_id: str, course_id: str) -> List[GradeModel]:
-        if not student_id or not course_id:
-            return []
-        grades_data = db.grades.find({"student_id": student_id, "course_id": course_id})
-        return [GradeService._to_grade(grade) for grade in grades_data]
-    
-    @staticmethod
-    def get_grades_by_class_id_and_course_id(class_id: str, course_id: str) -> List[GradeModel]:
-        if not class_id or not course_id:
-            return []
-        grades_data = db.grades.find({"class_id": class_id, "course_id": course_id})
-        return [GradeService._to_grade(grade) for grade in grades_data]
+    def update_grade(self, _id: Union[str, ObjectId], update_data: Dict[str, Any]) -> Optional[GradeModel]:
+        # take Object or str and update by POST method
+        pass
+    def delete_grade(self, _id: Union[str, ObjectId]) -> bool:
+        return self.collection.delete_one({"_id": _id})
+

@@ -1,10 +1,6 @@
-import type {
-  ClassModel as IClassModel,
-  ClassInfo,
-} from "~/types/models/Class";
 import type { ScheduleItem } from "~/types/models/Schedule";
 
-export class ClassInfoModel implements ClassInfo {
+export class ClassInfoModel {
   course_code: string = "";
   course_title: string = "";
   lecturer: string = "";
@@ -15,10 +11,10 @@ export class ClassInfoModel implements ClassInfo {
   credits: number = 0;
   link_telegram?: string;
   department: string = "";
-  description: string = "";
+  description?: string;
   year: number = new Date().getFullYear();
 
-  constructor(data: Partial<ClassInfo> = {}) {
+  constructor(data: Partial<ClassInfoModel> = {}) {
     Object.assign(this, {
       course_code: "",
       course_title: "",
@@ -55,41 +51,38 @@ export class ClassInfoModel implements ClassInfo {
   }
 }
 
-export class ClassModel implements IClassModel {
+export class ClassModel {
   _id?: string;
-  class_id: string;
-  class_info: ClassInfoModel;
+  class_info?: ClassInfoModel;
+  created_by?: string;
   students_enrolled: string[] = [];
   max_students: number = 30;
-  created_at: string;
-  update_history: string[] = [];
 
-  constructor(data: Partial<IClassModel> = {}) {
-    this._id = data._id;
-    this.class_id = data.class_id ?? crypto.randomUUID();
-    this.class_info = new ClassInfoModel(data.class_info);
-    this.students_enrolled = data.students_enrolled ?? [];
-    this.max_students = data.max_students ?? 30;
-    this.created_at = data.created_at ?? new Date().toISOString();
-    this.update_history = data.update_history ?? [];
+  constructor(data: Partial<ClassModel> = {}) {
+    Object.assign(this, {
+      students_enrolled: [],
+      max_students: 30,
+      ...data,
+    });
+
+    this.class_info = data.class_info
+      ? new ClassInfoModel(data.class_info)
+      : undefined;
   }
 
-  recordUpdate() {
-    this.update_history.push(new Date().toISOString());
-  }
   static empty(): ClassModel {
-    return new ClassModel();
+    return new ClassModel({
+      class_info: ClassInfoModel.empty(),
+    });
   }
 
   toDict(): Record<string, any> {
     return {
       _id: this._id,
-      class_id: this.class_id,
-      class_info: this.class_info.toDict(),
+      class_info: this.class_info?.toDict(),
+      created_by: this.created_by,
       students_enrolled: this.students_enrolled,
       max_students: this.max_students,
-      created_at: this.created_at,
-      update_history: this.update_history,
     };
   }
 }

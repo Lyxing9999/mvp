@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field  # type: ignore
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, ClassVar
 from app.enums.status import AttendanceStatus
 from app.utils.objectid import ObjectId # type: ignore
 from app.utils.pyobjectid import PyObjectId
-
 class StudentInfoModel(BaseModel):
     student_id: str
     grade: Optional[int] = 0
@@ -54,6 +53,8 @@ class StudentInfoModel(BaseModel):
     }
 
 class StudentModel(BaseModel):
+    _collection_name: ClassVar[str] = "student" 
+    
     id: Optional[PyObjectId] = Field(None, alias="_id")
     student_info: StudentInfoModel
     
@@ -68,6 +69,7 @@ class StudentModel(BaseModel):
         return cls(**data)
     
     model_config = {
+        "extra": "allow",
         "from_attributes": True,
         "json_encoders": {ObjectId: str, PyObjectId: str},
         "populate_by_name": True,

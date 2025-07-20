@@ -1,5 +1,4 @@
 from typing import  Optional
-from app.db import get_db
 from datetime import date, datetime, timezone
 from pydantic import BaseModel, Field # type: ignore
 from enums.status import AttendanceStatus

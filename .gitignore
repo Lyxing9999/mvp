@@ -1,1 +1,16 @@
 node_modules
+
+# Ignore env
+.env
+.env.*
+
+
+# Ignore env
+.env
+.env.*
+
+render.yaml
+render.yaml
+docker-compose.yaml
+docker-compose.yml
+docker-compose.yaml

@@ -8,7 +8,7 @@ import type {
 import StatisticsCards from "~/components/Base/StatisticsCards.vue";
 definePageMeta({ layout: "admin" });
 import { UserService } from "~/services/userService";
-
+import type { AxiosInstance } from "axios";
 type GrowthStat = {
   role: "student" | "admin" | "teacher";
   growth_percentage: number | string;
@@ -82,7 +82,8 @@ const handleRangeChange = (
 };
 
 const fetchGrowth = async (dates: any) => {
-  const userService = new UserService();
+  const $api = useNuxtApp().$api as AxiosInstance;
+  const userService = new UserService($api);
   try {
     const growthStats = await userService.compareGrowthStatsByRole(dates);
 
@@ -113,7 +114,8 @@ const regularUserCounts = ref<NormalUserCount>({
 });
 
 const fetchNormal = async () => {
-  const userService = new UserService();
+  const $api = useNuxtApp().$api as AxiosInstance;
+  const userService = new UserService($api);
   try {
     const userCounts = await userService.countByRole();
     regularUserCounts.value = {
@@ -128,7 +130,10 @@ const fetchNormal = async () => {
 </script>
 
 <template>
-  <DateRangeSelector @formattedDates="handleRangeChange" />
+  <div class="p-4">
+    <DateRangeSelector @formattedDates="handleRangeChange" />
+  </div>
+
   <StatisticsCards
     v-if="mode === 'growth'"
     :user-count="growthUserCounts"

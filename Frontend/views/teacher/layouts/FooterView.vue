@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import BaseFooter from "~/components/Base/BaseFooter.vue";
 
 const props = defineProps<{
   title: string;
@@ -7,5 +7,5 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div>Footer</div>
+  <BaseFooter :title="title" />
 </template>

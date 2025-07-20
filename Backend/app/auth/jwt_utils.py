@@ -18,27 +18,31 @@ def create_access_token(data: dict, expire_delta: timedelta = timedelta(hours=1)
     return encoded_jwt
 
 
-
 def role_required(allowed_roles: list[str]):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
             auth_header = request.headers.get("Authorization")
             if not auth_header or not auth_header.startswith("Bearer "):
-                return jsonify({"msg": "Missing or invalid token"}), 401
+                return jsonify({"msg": "Missing or invalid token"}), 401       
             token = auth_header.split(" ")[1]
             try:
                 payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
                 role = payload.get("role")
-                if role not in allowed_roles:
+                user_id = payload.get("id")
+                if not role or role not in allowed_roles:
                     return jsonify({"msg": "Access denied: role not allowed"}), 403
-                g.user = payload 
+                g.user = {
+                    "id": user_id,
+                    "role": role,
+                    "username": payload.get("username")
+                }
+
             except jwt.ExpiredSignatureError:
                 return jsonify({"msg": "Token expired"}), 401
-            except jwt.InvalidTokenError:
+            except jwt.InvalidTokenError as e:
                 return jsonify({"msg": "Invalid token"}), 401
 
             return f(*args, **kwargs)
         return wrapper
     return decorator
-

@@ -5,9 +5,10 @@ import { UserService } from "~/services/userService";
 import { UserRole } from "~/services/authService";
 import { useUserStore } from "~/stores/userStore";
 import BaseForm from "~/components/Base/BaseForm.vue";
-
+import type { AxiosInstance } from "axios";
 const loading = ref(false);
-const userService = new UserService();
+const $api = useNuxtApp().$api as AxiosInstance;
+const userService = new UserService($api);
 const { showSuccess, showError } = useMessage();
 const userStore = useUserStore();
 const form = reactive({

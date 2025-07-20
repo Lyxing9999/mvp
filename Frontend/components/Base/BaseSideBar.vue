@@ -93,7 +93,7 @@ const getIconStyle = (item: { route: string }) => ({
 <template>
   <el-aside :class="asideClass">
     <div v-if="!isMobile" :class="logoSectionClass">
-      <p>Logo</p>
+      <img :src="logoSrc" alt="Logo" class="w-full h-full" />
     </div>
     <el-menu :class="menuClass" :collapse="isCollapsed" router>
       <el-menu-item
