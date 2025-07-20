@@ -1,40 +1,62 @@
-# Python cache and environments
+# ────────────── Python Environments ──────────────
+.venv/
+venv/
+env/
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-venv/
-env/
+
+# ────────────── Flask Runtime ──────────────
 instance/
-.venv/
-# Python packaging/build
+*.log
+*.pid
+
+# ────────────── Python Packaging ──────────────
 *.egg-info/
 build/
 dist/
 
-# Flask logs (optional)
-*.log
-
-# dotenv / secrets
+# ────────────── Secrets / Environment ──────────────
 .env
 .env.*
+*.secret
+*.key
+*.pem
 
-# IDE/editor configs
+# ────────────── IDEs / Editors ──────────────
 .vscode/
 .idea/
+*.sublime*
+*.sw?
 
-# Unit test cache
+# ────────────── Testing / Coverage ──────────────
 .coverage
-htmlcov/
 .tox/
 .pytest_cache/
 .cache/
 nosetests.xml
 coverage.xml
 *.cover
+htmlcov/
 
-# MongoDB dump (optional if using mongoexport/mongodump)
+# ────────────── OS Files ──────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ────────────── MongoDB Dumps ──────────────
 dump/
 
-# MacOS system file
-.DS_Store
+# ────────────── NodeJS (if using frontend) ──────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ────────────── Nuxt (if full-stack with Nuxt) ──────────────
+.nuxt/
+.output/
+*.log
+*.tsbuildinfo
