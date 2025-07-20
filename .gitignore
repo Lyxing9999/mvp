@@ -1,17 +1,32 @@
-node_modules
-
-# Ignore env
+# =========================
+# ✅ Environment Files
+# =========================
 .env
 .env.*
+!.env.example
 
-
-# Ignore env
-.env
-.env.*
-
-render.yaml
+# =========================
+# ✅ Deployment & Docker
+# =========================
 render.yaml
 docker-compose.yaml
 docker-compose.yml
-docker-compose.yaml
-render.yaml
+
+# =========================
+# ✅ Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# ✅ System & Editor Files
+# =========================
+.DS_Store
+.fleet/
+.idea/
+.vscode/
+
+# =========================
+# ✅ Node Modules (Global Safety)
+# =========================
+node_modules/

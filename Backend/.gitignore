@@ -1,29 +1,46 @@
-# Python cache and environments
+# =========================
+# ✅ Python Bytecode & Cache
+# =========================
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+
+# =========================
+# ✅ Virtual Environments
+# =========================
 venv/
 env/
-instance/
 .venv/
-# Python packaging/build
+instance/
+
+# =========================
+# ✅ Python Packaging/Build
+# =========================
 *.egg-info/
 build/
 dist/
 
-# Flask logs (optional)
+# =========================
+# ✅ Flask Logs (Optional)
+# =========================
 *.log
 
-# dotenv / secrets
+# =========================
+# ✅ Env Files / Secrets
+# =========================
 .env
 .env.*
 
-# IDE/editor configs
+# =========================
+# ✅ IDE/Editor Configs
+# =========================
 .vscode/
 .idea/
 
-# Unit test cache
+# =========================
+# ✅ Test / Coverage Caches
+# =========================
 .coverage
 htmlcov/
 .tox/
@@ -33,8 +50,12 @@ nosetests.xml
 coverage.xml
 *.cover
 
-# MongoDB dump (optional if using mongoexport/mongodump)
+# =========================
+# ✅ MongoDB Dumps (Optional)
+# =========================
 dump/
 
-# MacOS system file
+# =========================
+# ✅ macOS System Files
+# =========================
 .DS_Store

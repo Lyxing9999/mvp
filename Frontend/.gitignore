@@ -1,4 +1,6 @@
-# Nuxt dev/build outputs
+# =========================
+# ✅ Nuxt Dev/Build Outputs
+# =========================
 .output/
 .data/
 .nuxt/
@@ -6,19 +8,28 @@
 .cache/
 dist/
 
-# Node dependencies
+# =========================
+# ✅ Node Dependencies
+# =========================
 node_modules/
 
-# Logs
+# =========================
+# ✅ Logs
+# =========================
 logs/
 *.log
 
-# Misc
+# =========================
+# ✅ System & Editor Files
+# =========================
 .DS_Store
-.fleet
+.fleet/
 .idea/
+.vscode/
 
-# Local env files
+# =========================
+# ✅ Environment Files
+# =========================
 .env
 .env.*
 !.env.example
