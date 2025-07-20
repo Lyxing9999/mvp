@@ -1,32 +1,56 @@
-<script lang="ts" setup>
-import TeacherSidebar from "~/views/teacher/layouts/SidebarView.vue";
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRoute } from "vue-router";
 import TeacherHeader from "~/views/teacher/layouts/HeaderView.vue";
 import TeacherFooter from "~/views/teacher/layouts/FooterView.vue";
+import TeacherSidebar from "~/views/teacher/layouts/SidebarView.vue";
 
-const containerClass = "min-h-screen bg-gray-50 dark:bg-gray-900";
-const asideClass = "h-screen overflow-y-auto";
-const headerHeight = "64px";
-const footerHeight = "50px";
-const mainClass = "overflow-auto";
-const footerClass = "bg-white shadow px-4 py-2";
-const leftSectionClass = "flex items-center";
-const rightSectionClass = "flex items-center";
+const route = useRoute();
+
+const isMobile = ref(false);
+const checkScreen = () => {
+  isMobile.value = window.innerWidth < 800;
+};
+onMounted(() => {
+  checkScreen();
+  window.addEventListener("resize", checkScreen);
+});
+onUnmounted(() => {
+  window.removeEventListener("resize", checkScreen);
+});
+
+const sidebarWidth = computed(() => (isMobile.value ? "65px" : "250px"));
 </script>
+
 <template>
-  <el-container :class="containerClass">
-    <el-header>
-      <TeacherHeader />
-    </el-header>
+  <el-container>
+    <el-aside :width="sidebarWidth">
+      <TeacherSidebar :title="route.meta.title" />
+    </el-aside>
+
     <el-container>
-      <el-aside :class="asideClass">
-        <TeacherSidebar />
-      </el-aside>
-      <el-main :class="mainClass">
-        <slot />
-      </el-main>
+      <el-header v-if="!route.meta.noHeader">
+        <TeacherHeader :title="route.meta.title" />
+      </el-header>
+      <Transition name="page" mode="out-in">
+        <el-main :key="route.fullPath">
+          <NuxtPage />
+        </el-main>
+      </Transition>
+      <el-footer v-if="!route.meta.noHeader">
+        <TeacherFooter :title="route.meta.title" />
+      </el-footer>
     </el-container>
-    <el-footer :class="footerClass">
-      <TeacherFooter />
-    </el-footer>
   </el-container>
 </template>
+<style>
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}
+</style>

@@ -25,6 +25,7 @@ const props = defineProps<{
   showSaveCancelControls?: boolean;
   type?: InputType;
   clearable?: boolean;
+  showInputField?: boolean;
   render?: (row: R) => VNode;
 }>();
 
@@ -76,6 +77,7 @@ defineSlots<{
           :type="type"
           :readonly="isReadOnly"
           :show-save-cancel-controls="showSaveCancelControls"
+          :show-input-field="showInputField"
           @save="$emit('save', row, field)"
           @cancel="$emit('cancel', row, field)"
         />

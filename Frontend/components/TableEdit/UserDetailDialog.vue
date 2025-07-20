@@ -15,7 +15,7 @@ const emit = defineEmits<{
 }>();
 
 function getNestedValue(obj: any, key: string) {
-  if (!obj) return null;
+  if (!obj || !key) return null;
   const keys = key.split(".");
   let result = obj;
   for (const k of keys) {
@@ -28,7 +28,6 @@ function getNestedValue(obj: any, key: string) {
 }
 const nestedValues = computed(() => {
   if (!props.infoObject) return {};
-  console.log("infoObject in dialog:", props.infoObject);
   const result: Record<string, any> = {};
   for (const field of props.fields) {
     if (field.children && field.children.length) {

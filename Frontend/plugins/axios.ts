@@ -12,11 +12,10 @@ export default defineNuxtPlugin(() => {
     timeout: 10000,
   });
 
-  // Attach token from localStorage
   api.interceptors.request.use((config) => {
     const authStore = useAuthStore();
     const token = authStore.token;
-    console.log(token);
+    console.log("Axios token:", token);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }

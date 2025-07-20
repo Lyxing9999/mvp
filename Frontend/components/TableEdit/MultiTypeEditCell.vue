@@ -17,6 +17,8 @@ import { ref, computed, nextTick, watch } from "vue";
 import SaveCancelControls from "~/components/TableEdit/SaveCancelControls.vue";
 import type { ElInput } from "element-plus";
 import type { InputType } from "~/constants/fields/types/Field";
+import dayjs from "dayjs";
+
 const inputRef = ref<InstanceType<typeof ElInput> | null>(null);
 
 const props = defineProps<{
@@ -35,6 +37,8 @@ const props = defineProps<{
   cancelText?: string;
   showSaveCancelControls?: boolean;
   clearable?: boolean;
+  format?: string;
+  showInputField?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -46,7 +50,7 @@ const emit = defineEmits<{
 }>();
 
 const tags = ref<string[]>([]);
-const showInputField = ref(false);
+const showInputField = ref(props.showInputField ?? false);
 const isAddingTag = ref(false);
 
 const isArray = computed(() => Array.isArray(props.modelValue));
@@ -160,6 +164,12 @@ watch(showInputField, (val) => {
   if (val) nextTick(() => inputRef.value?.focus());
 });
 
+watch(
+  () => props.showInputField,
+  (val) => {
+    showInputField.value = val ?? false;
+  }
+);
 function enableAddingTag() {
   isAddingTag.value = true;
   inputValue.value = "" as T;
@@ -169,6 +179,7 @@ const showSaveCancelControls = computed(
   () => props.showSaveCancelControls ?? true
 );
 const readonly = computed(() => props.readonly ?? false);
+const format = computed(() => props.format ?? "YYYY-MM-DD HH:mm:ss");
 </script>
 
 <template>
@@ -253,10 +264,17 @@ const readonly = computed(() => props.readonly ?? false);
         class="cursor-pointer flex justify-between items-center"
         @click="showInput()"
       >
-        <span class="truncate max-w-[170px] block">{{
+        <span v-if="type === 'date'" class="text-sm text-gray-500">
+          {{ dayjs(inputValue as Date).format(format) }}
+        </span>
+        <span v-else class="truncate max-w-[170px] block">{{
           inputValue || props.placeholder || "—"
         }}</span>
-        <span v-if="!disabled" class="flex justify-end items-center space-x-1">
+
+        <span
+          v-if="showSaveCancelControls"
+          class="flex justify-end items-center space-x-1"
+        >
           <el-icon><Edit /></el-icon>
         </span>
       </div>
@@ -287,6 +305,7 @@ const readonly = computed(() => props.readonly ?? false);
           :clearable="clearable"
           :placeholder="label"
           :default-value="props.dateDefaultVal"
+          :format="format"
         />
         <div v-if="!disabled" class="flex items-center space-x-1">
           <SaveCancelControls

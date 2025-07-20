@@ -19,8 +19,6 @@ const {
   currentPage,
   pageSize,
   hasDraft,
-  userDetails,
-  cancelEdit,
   handleDelete,
   submitInlineEdit,
   handleDetail,
@@ -29,11 +27,11 @@ const {
   userInfo,
   roleFields,
   attendance,
-  onAttendanceSave,
-  checkIsEditable,
   cancelEditDetail,
   showInfo,
   showError,
+  handleRole,
+  onAttendanceSave,
 } = useUsersManage();
 
 const UserDetailDialog = defineAsyncComponent(
@@ -76,7 +74,7 @@ const users = computed<User[]>(() => userStore.users);
         @save="submitInlineEdit"
       >
         <template #operation="{ row }">
-          <el-button type="primary" @click="handleDetail(row)" size="small">
+          <el-button type="primary" @click="handleDetail(row._id)" size="small">
             Detail
           </el-button>
 
@@ -115,7 +113,7 @@ const users = computed<User[]>(() => userStore.users);
       destroy-on-close
       :loading="dialogLoading"
       :key="dialogKey"
-      :title="userDetails?.profile?.role ?? ''"
+      :title="handleRole ?? ''"
       :infoObject="userInfo as Record<string, any>"
       :fields="roleFields"
       width="800px !important"
@@ -126,15 +124,18 @@ const users = computed<User[]>(() => userStore.users);
           :default="value"
           :type="item.type || 'string'"
           @info="(msg) => showInfo(msg)"
-          :readonly="!checkIsEditable(item.key)"
-          :disabled="!checkIsEditable(item.key)"
+          :show-save-cancel-controls="item.showSaveCancelControls"
+          :readonly="item.readonly"
+          :disabled="item.disabled"
           :dateDefaultVal="
             item.isDate
               ? new Date(new Date().setFullYear(new Date().getFullYear() - 18))
               : undefined
           "
           :infoObject="value"
+          :format="item.format"
           :fields="fields"
+          :show-input-field="item.showInputField"
           :label="item.label"
           @save="(val) => handleInlineEditSubmitDialog(val, item.key)"
           @cancel="cancelEditDetail(item.key)"

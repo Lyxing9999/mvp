@@ -1,11 +1,18 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import BaseSidebar from "~/components/Base/BaseSidebar.vue";
+import { useRoute } from "vue-router";
+import schoolLogo from "~/assets/image/school_logo.png";
 
-const props = defineProps<{
-  title: string;
-}>();
+const route = useRoute();
+
+const sidebarClasses = {
+  asideClass: "bg-[var(--color-light)] dark:bg-[var(--color-sidebar-dark)]",
+};
 </script>
-
 <template>
-  <div>Sidebar</div>
+  <BaseSidebar
+    :is-mobile="false"
+    :aside-class="sidebarClasses.asideClass"
+    :logo-src="schoolLogo"
+  />
 </template>

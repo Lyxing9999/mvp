@@ -1,10 +1,10 @@
 from typing import List, Dict
-from pydantic import BaseModel, Field # type: ignore
+from pydantic import BaseModel, Field
 from app.utils.objectid import ObjectId #type: ignore
 from typing import Optional
 from datetime import datetime, timezone, date
 from app.enums.roles import Role
-
+from app.models.classes import ClassesModel
 
 
 class UserCreateSchema(BaseModel):
@@ -72,7 +72,7 @@ class TeacherPatchSchema(BaseModel):
     }
 class StudentInfoPatchSchema(BaseModel):
     student_id: Optional[str] = Field(None, description="Unique student identifier")
-    year_level: Optional[str] = Field(None, example="2nd Year")
+    year_level: Optional[str] = Field(None, description="Year level of the student")
     class_ids: Optional[List[str]] = Field(default_factory=list)
     major: Optional[str] = None
     birth_date: Optional[date] = None
@@ -80,10 +80,7 @@ class StudentInfoPatchSchema(BaseModel):
     address: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[str] = None
-    attendance_record: Optional[Dict[str, str]] = Field(
-        default_factory=dict,
-        example={"2025-08-10": "present"}
-    )
+    attendance_record: Optional[Dict[str, str]] = Field(default_factory=dict)
     courses_enrolled: Optional[List[ObjectId]] = Field(default_factory=list)
     scholarships: Optional[List[str]] = Field(default_factory=list)
     expected_graduation_year: Optional[int] = None
@@ -120,7 +117,6 @@ class UserPatchUserDetailSchema(BaseModel):
 
 
 class UserDetailResponseSchema(BaseModel):
-    profile: UserResponseSchema
     teacher: Optional[TeacherPatchSchema] = None
     student: Optional[StudentPatchSchema] = None
 
@@ -128,4 +124,15 @@ class UserDetailResponseSchema(BaseModel):
         "from_attributes": True,
         "populate_by_name": True,
         "arbitrary_types_allowed": True,
+    }
+    
+
+class TeacherClassesResponseSchema(BaseModel):
+    classes: Optional[List[ClassesModel]] = Field(default_factory=list)
+
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,
+        "arbitrary_types_allowed": True,
+        "extra": "allow",
     }

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import ClassVar, List, Optional
 from pydantic import BaseModel, Field   # type: ignore 
 from datetime import datetime, timezone
 from app.utils.pyobjectid import PyObjectId
@@ -29,6 +29,8 @@ class TeacherInfoModel(BaseModel):
         return cls(**data)
 
 class TeacherModel(BaseModel):
+    _collection_name: ClassVar[str] = "teacher"
+    
     id: Optional[PyObjectId] = Field(None, alias="_id")
     phone_number: Optional[str] = None
     teacher_info: TeacherInfoModel
@@ -36,6 +38,8 @@ class TeacherModel(BaseModel):
     model_config = {
             "from_attributes": True,
             "populate_by_name": True,
+             "extra": "allow",
+
             "arbitrary_types_allowed": True,
             "json_encoders": {ObjectId: str, PyObjectId: str},    
     }

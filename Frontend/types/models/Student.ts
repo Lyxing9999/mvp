@@ -1,8 +1,5 @@
-import { Role } from "~/types/models/User";
 import type { AttendanceStatus } from "~/types/models/Attendance";
 export interface StudentInfo {
-  _id?: string;
-  user_id: string;
   student_id: string;
   grade?: string;
   class_ids: string[];
@@ -22,11 +19,6 @@ export interface StudentInfo {
 }
 
 export interface Student {
-  _id?: string;
-  user_id: string;
-  role: Role;
-  username: string;
-  email?: string;
-  password?: string;
+  _id: string;
   student_info: StudentInfo;
 }

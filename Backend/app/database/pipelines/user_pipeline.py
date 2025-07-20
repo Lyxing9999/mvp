@@ -61,9 +61,9 @@ def build_user_growth_stats_pipeline(start_date: str, end_date: str) -> list:
     return pipeline
 
 
-def build_user_detail_pipeline(user_id: ObjectId) -> list:
+def build_user_detail_pipeline(_id: ObjectId) -> list:
     return [
-        {"$match": {"_id": user_id}},
+        {"$match": {"_id": _id}},
         
         {"$lookup": {
             "from": "admin",
@@ -89,6 +89,8 @@ def build_user_detail_pipeline(user_id: ObjectId) -> list:
         }},
         {"$unwind": {"path": "$student", "preserveNullAndEmptyArrays": True}},
     ]
+
+
 
 
 def build_search_user_pipeline(query: str, page: int, page_size: int) -> list:

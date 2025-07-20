@@ -8,5 +8,6 @@ export interface ColumnConfig<T> {
   readonly?: boolean;
   showSaveCancelControls?: boolean;
   slot?: boolean;
+  showInputField?: boolean;
   render?: (row: T) => any;
 }

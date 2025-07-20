@@ -14,9 +14,12 @@ export interface Field {
   label: string;
   key: string;
   children?: Field[];
+  showSaveCancelControls?: boolean;
   format?: string;
   type?: InputType;
   isArray?: boolean;
   isDate?: boolean;
   isDict?: boolean;
+  readonly?: boolean;
+  disabled?: boolean;
 }

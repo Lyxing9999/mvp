@@ -1,53 +1,66 @@
 from app.models.feedback import FeedbackModel
 from app.database.db import get_db
-from app.utils.exceptions import NotFoundError, ValidationError, DatabaseError
+from app.error.exceptions import NotFoundError, ValidationError, DatabaseError, ExceptionFactory, InternalServerError, AppBaseException, BadRequestError, ErrorCategory, ErrorSeverity , AppTypeError
+from app.utils.convert import convert_objectid_to_str
 from app.utils.objectid import ObjectId # type: ignore
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, timezone
-from app.utils.console import console
 from pymongo.database import Database # type: ignore
+from app.utils.model_utils import default_model_utils
+from abc import ABC, abstractmethod
+from pymongo.database import Database
+import logging
+logger = logging.getLogger(__name__)
 
-class FeedbackService:
+class FeedbackService(ABC):
+    pass
+
+class MongoFeedbackService(FeedbackService):
     def __init__(self, db: Database):
         self.db = db
+        self.collection = self.db.feedback
+        self.model_utils = default_model_utils
+
+    def _to_feedback(self, data: Dict[str, Any]) -> Optional[FeedbackModel]:
+        return self.model_utils.to_model(data, FeedbackModel)
+    
+    def _to_feedback_list(self, data_list: List[Dict[str, Any]]) -> List[FeedbackModel]:
+        return self.model_utils.to_model_list(data_list, FeedbackModel)
+    
     def _to_objectid(self, id_val: Union[str, ObjectId]) -> Optional[ObjectId]:
-        if isinstance(id_val, ObjectId):
-            return id_val
-        if isinstance(id_val, str) and ObjectId.is_valid(id_val):
-            return ObjectId(id_val)
-        return None
-    def create_feedback(self, feedback: FeedbackModel) -> FeedbackModel:
-        try:
-            feedback = FeedbackModel(**feedback)
-            doc = feedback.to_dict()
-            result = self.db.feedback.insert_one(doc)
-            return FeedbackModel(**result.inserted_id)
-        except Exception as e:
-            console.log(f"Failed to create feedback: {e}")
-            raise DatabaseError("Error while creating feedback.")
-
-    def get_feedback(self, _id: str) -> Optional[FeedbackModel]:
-        """
-        Get a feedback by its ID.
-
-        Args:
-            feedback_id (str): The ID of the feedback to retrieve.
-
-        Returns:
-            FeedbackModel: The feedback object if found, None otherwise.
-
-        Raises:
-            NotFoundError: If the feedback is not found.
-            ValidationError: If the feedback ID is invalid.
-            DatabaseError: If there is an error accessing the database.
-        """
-        try:
-            feedback_id = self._to_objectid(_id)
-            if not feedback_id:
-                raise ValidationError("Invalid feedback ID format")
-            result = self.db.feedback.find_one({"_id": feedback_id}) 
-            return FeedbackModel(**result) if result else None
-        except Exception as e:
-            console.log(f"Error fetching feedback by ID {feedback_id}: {str(e)}")
-            raise DatabaseError("Failed to fetch feedback")
+        return self.model_utils.validate_object_id(id_val)
+    
+    def _prepare_safe_update(self, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        return self.model_utils.prepare_safe_update(update_data)
+    
+    def _convert_objectid_dict(self, data: Dict[str, Any]) -> Optional[FeedbackModel]:
+        data = convert_objectid_to_str(data)
+        return FeedbackModel(**data)
+    
+    def _fetch_first_inserted(self, inserted_id: ObjectId) ->  Optional[FeedbackModel]:
+        if not inserted_id:
+            raise NotFoundError(
+                message="No classes inserted",
+                severity=ErrorSeverity.HIGH,
+                category=ErrorCategory.DATABASE,
+                status_code=404
+            )
+        raw_doc = self.collection.find_one({"_id": inserted_id})
+        if not raw_doc:
+            raise NotFoundError(message="No classes inserted", severity=ErrorSeverity.HIGH, category=ErrorCategory.DATABASE, status_code=404)
+        return self._convert_objectid_dict(raw_doc)
+    
+    def create_feedback(self,  data: Dict[str, Any]) -> Optional[FeedbackModel]:
         
+        try:
+            feedback = self._to_feedback(data)
+            if not feedback:
+                raise ExceptionFactory.validation_failed(field="data", value=data, reason="Invalid feedback data")
+            result = self.collection.insert_one(feedback.model_dump(by_alias=True, exclude_none=True))
+            if not result.acknowledged:
+                raise InternalServerError(message="Failed to create feedback in database", details={"data": data})
+            return self._fetch_first_inserted(result.inserted_id)
+        except AppBaseException:
+            raise
+        except Exception as e:
+            raise InternalServerError(message="Unexpected error occurred while creating feedback", cause=e)

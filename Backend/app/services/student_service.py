@@ -1,43 +1,63 @@
-from app.models.student import Student # type: ignore
-from app.db import get_db
-from typing import Optional, List
+from app.models.student import StudentModel # type: ignore
+from typing import Optional, List, Dict, Any, Union
 from app.utils.objectid import ObjectId # type: ignore
-from app.models.classes import ClassesModel # type: ignore
-db = get_db()
+from pymongo.database import Database # type: ignore
+from app.models.user import UserModel # type: ignore
+from abc import ABC, abstractmethod
+from app.error.exceptions import ExceptionFactory, AppBaseException, InternalServerError    
+from app.utils.model_utils import default_model_utils
+from app.utils.convert import convert_objectid_to_str
+
+class StudentService(ABC):
+    pass
 
 
-class StudentService:
-    @staticmethod
-    def _to_student(data: Optional[dict]) -> Optional[Student]:
-        if not isinstance(data, dict):
-            return None
-        return Student(**data)
+class MongoStudentService(StudentService):
+    def __init__(self, db: Database):
+        self.db = db
+        self.collection = self.db.student
+        self.model_utils = default_model_utils
+        self._user_service = None
+        self._classes_service = None
+
+    @property
+    def user_service(self):
+        if self._user_service is None:
+            from app.services.user_service import get_user_service
+            self._user_service = get_user_service(self.db)
+        return self._user_service
+    @property
+    def classes_service(self):
+        if self._classes_service is None:
+            from app.services.classes_service import get_classes_service
+            self._classes_service = get_classes_service(self.db)
+        return self._classes_service
     
-    @staticmethod
-    def _to_students(data_list: list) -> list[Student]:
+    def _to_student(self, data: Dict[str, Any]) -> Optional[StudentModel]:
+        return self.model_utils.to_model(data, StudentModel)
+    
+    def _to_student_list(self, data_list: List[Dict[str, Any]]) -> List[UserModel]:
+        return self.model_utils.to_model_list(data_list, UserModel)
+    
+    def _to_objectid(self, id_val: Union[str, ObjectId]) -> Optional[ObjectId]:
+        return self.model_utils.validate_object_id(id_val)
+
+    def _prepare_safe_update(self, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        return self.model_utils.prepare_safe_update(update_data)
+
+    def _convert_objectid_dict(self, data: Dict[str, Any]) -> StudentModel:
+        data = convert_objectid_to_str(data)
+        return StudentModel(**data) 
+
+    def create_student(self, data: Dict[str, Any]) -> Optional[UserModel]:
+        return self.user_service.create_user(data)
+
         
-        return [Student(**data) for data in data_list if isinstance(data, dict)]
 
-    
-    @classmethod
-    def get_student_info_by_id(cls, student_id: str) -> Optional[Student]:
-        if not student_id:
-            return None
-        try:
-            student_data = db.students.find_one({"_id": ObjectId(student_id)})
-            return cls._to_student(student_data)
-        except Exception as e:
-            print(f"Error fetching student by ID: {e}")
-            return None
-    @classmethod
-    def get_student_classes(cls, student: Student) -> List[ClassesModel]:
-        try:
-            class_ids = getattr(student.student_info, "class_ids", [])
-            if not class_ids:
-                return []
-            object_ids = [ObjectId(cid) for cid in class_ids if ObjectId.is_valid(cid)]
-            classes_data = db.classes.find({"_id": {"$in": object_ids}})
-            return [ClassesModel(**c) for c in classes_data]
-        except Exception as e:
-            print(f"Error fetching student classes: {e}")
-            return []
+
+
+
+
+
+def get_student_service(db: Database) -> MongoStudentService:
+    return MongoStudentService(db)

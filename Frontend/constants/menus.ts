@@ -15,8 +15,6 @@ export const menus = {
     { title: "Attendance", icon: "Calendar", route: "/teacher/attendance" },
     { title: "Notifications", icon: "Bell", route: "/teacher/notifications" },
     { title: "Settings", icon: "Setting", route: "/teacher/settings" },
-    { title: "System Events", icon: "Calendar", route: "/teacher/events" },
-    { title: "Settings", icon: "Setting", route: "/teacher/settings" },
   ],
   student: [
     { title: "Dashboard", icon: "HomeFilled", route: "/student/dashboard" },

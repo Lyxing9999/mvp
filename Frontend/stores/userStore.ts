@@ -5,8 +5,10 @@ import type { UserDetail } from "~/types/userServiceInterface";
 import { UserStoreError } from "~/errors/UserStoreError";
 import { unflatten } from "~/utils/unflatten";
 import { convertDatesToISOString } from "~/utils/convertDatesToISOString";
+import type { AxiosInstance } from "axios";
 export const useUserStore = defineStore("user", () => {
-  const userService = new UserService();
+  const $api = useNuxtApp().$api as AxiosInstance;
+  const userService = new UserService($api);
   const loadingUserDetails = reactive<Record<string, boolean>>({});
   const users = ref<User[]>([]);
   const userDetailsCache = reactive<Record<string, UserDetail>>({});
@@ -24,7 +26,7 @@ export const useUserStore = defineStore("user", () => {
     try {
       const usersArray = await userService.listUsers();
       users.value = usersArray.map((user) => new UserModel(user));
-
+      console.log("users", users.value);
       return users.value;
     } catch (error) {
       if (error instanceof UserStoreError) {

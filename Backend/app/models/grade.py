@@ -1,29 +1,19 @@
-from datetime import datetime, timezone
-from typing import Optional
 from pydantic import BaseModel, Field, computed_field  # type: ignore
-from bson import ObjectId  # type: ignore
+from app.utils.pyobjectid import PyObjectId
 
 class GradeModel(BaseModel):
-    id: Optional[str] = Field(default_factory=lambda: str(ObjectId()), alias="_id")
-    teacher_id: str
-    student_id: str
-    student_name: Optional[str] = None
-    class_id: str 
-    course_id: Optional[str] = None
     
-    attendance: Optional[float] = 0.0
-    assignment: Optional[float] = 0.0
-    quiz: Optional[float] = 0.0
-    project: Optional[float] = 0.0
-    midterm: Optional[float] = 0.0
-    final_exam: Optional[float] = 0.0 
-    extra_exam: Optional[float] = 0.0
-    
-    term: Optional[str] = "Term 1"
-    remark: Optional[str] = None
-    
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: Optional[datetime] = None
+    id: PyObjectId | None = Field(None, alias="_id")
+    student_name: str
+    course_id: str
+    attendance: float | None = 0.0
+    assignment: float | None = 0.0
+    quiz: float | None = 0.0
+    project: float | None = 0.0
+    midterm: float | None = 0.0
+    final_exam: float | None = 0.0 
+    extra_exam: float | None = 0.0
+    term: str = "Term 1"
     
     @computed_field
     def total(self) -> float:
@@ -66,7 +56,9 @@ class GradeModel(BaseModel):
         else:
             return "F"
 
-    def is_passing(self, passing_grade: float = 60.0) -> bool:
+    def is_passing(self, passing_grade: float | None = None) -> bool:
+        if passing_grade is None:
+            passing_grade = 60.0
         return self.total >= passing_grade
     
     model_config = {
@@ -74,29 +66,3 @@ class GradeModel(BaseModel):
         "from_attributes": True,
         "arbitrary_types_allowed": True,
     }
-
-    @classmethod
-    def create_minimal(cls, autofilled_data: Optional[dict] = None, **overrides):
-        data = {
-            "teacher_id": "",
-            "student_id": "",
-            "student_name": None,
-            "class_id": "",
-            "term": "Term 1",
-            "remark": None,
-            "course_id": None,
-            "attendance": 0.0,
-            "assignment": 0.0,
-            "quiz": 0.0,
-            "project": 0.0,
-            "midterm": 0.0,
-            "final_exam": 0.0,
-            "extra_exam": 0.0,  
-            "created_at": datetime.now(timezone.utc),
-            "updated_at": None,
-        }
-        if autofilled_data:
-            data.update(autofilled_data)
-        data.update(overrides)
-        return cls(**data)
-        

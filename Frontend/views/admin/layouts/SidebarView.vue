@@ -2,7 +2,6 @@
 import BaseSidebar from "~/components/Base/BaseSidebar.vue";
 import schoolLogo from "~/assets/image/school_logo.png";
 import { useRoute } from "vue-router";
-
 const route = useRoute();
 
 const sidebarClasses = {

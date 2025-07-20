@@ -1,26 +1,35 @@
+from typing import Optional
 from flask import request, url_for  # type: ignore
+from pydantic.type_adapter import R
 from werkzeug.security import check_password_hash  # type: ignore
 from datetime import timedelta
-from app.enums.roles import Role 
+from app.enums.roles import Role
+from app.models.user import UserModel 
 from . import auth_bp
 from app import oauth
-from app.services.user_service import MongoUserService
+from app.services.user_service import get_user_service
 from app.auth.jwt_utils import create_access_token
 from app.repositories.user_repository import UserRepositoryImpl
 from app.utils.response_utils import Response  # type: ignore
 from app.database.db import get_db
 import logging
+from app.error.exceptions import NotFoundError , UnauthorizedError, ErrorSeverity, ErrorCategory, BadRequestError, AppTypeError
+
 logger = logging.getLogger(__name__)
-db = get_db()
 
-
-def build_jwt_payload(user: dict) -> dict:
+def build_jwt_payload(user: Optional[UserModel]) -> dict:
+    if not isinstance(user, UserModel):
+        raise AppTypeError(
+            message=f"Expected UserModel, got {type(user).__name__}",
+            status_code=400
+        )
     return {
-        "id": str(user.get("id") or user.get("_id")),
-        "role": user.get("role"),
-        "username": user.get("username"),
-        "email": user.get("email"),
+        "id": str(user.id),
+        "role": user.role,
+        "username": user.username,
+        "email": user.email,
     }
+
 
 @auth_bp.route('/google/login')
 def google_login():
@@ -40,7 +49,7 @@ def google_login_callback():
     if not email:
         return Response.error_response("Google login failed, no email found", status_code=400)
 
-    user_service = MongoUserService(db, UserRepositoryImpl(db))
+    user_service = get_user_service(get_db())
     user = user_service.user_repo.find_user_by_email(email)
 
     if user:
@@ -76,56 +85,41 @@ def register():
     if not data:
         return Response.error_response("Invalid JSON body", status_code=400)
 
-    user_service = MongoUserService(db, UserRepositoryImpl(db))
+    user_service = get_user_service(get_db())
     result = user_service.create_user(data)
-    if not result:
-        return Response.error_response("User registration failed", status_code=400)
     user = result.get("user")
     access_token = create_access_token(
         data=build_jwt_payload(user),
         expire_delta=timedelta(hours=1)
     )
-
     return Response.success_response({"access_token": access_token}, message="User registered successfully", status_code=201)
 
 
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    try:
-        data = request.get_json() or {}
-        username = data.get('username')
-        password = data.get('password')
+    data = request.get_json() or {}
+    username = data.get('username')
+    if not username:
+        raise BadRequestError(message="Username is required")
+    password = data.get('password')
+    if  not password:
+        raise BadRequestError(message="Password is required")
 
-        if not username or not password:
-            return Response.error_response("Username and password are required", status_code=400)
+    user_service = get_user_service(get_db())
+    print("user_service", user_service)
+    user = user_service.user_repo.find_user_by_username(username)
+    access_token = create_access_token(
+        data=build_jwt_payload(user),
+        expire_delta=timedelta(hours=1)
+    )
 
-        user_service = MongoUserService(db, UserRepositoryImpl(db))
-        user = user_service.user_repo.find_user_by_username(username)
-        if not user:
-            return Response.unauthorized_response("Invalid username or password")
+    return Response.success_response({
+        "access_token": access_token,
+        "user": build_jwt_payload(user)
+    }, message="Login successful")
 
-        if not user.password:
-            logger.warning(f"User {username} has no password set")
-            return Response.unauthorized_response("Invalid username or password")
 
-        if not check_password_hash(user.password, password):
-            return Response.unauthorized_response("Invalid username or password")
-
-        user_dict = user.model_dump(by_alias=True)
-
-        access_token = create_access_token(
-            data=build_jwt_payload(user_dict),
-            expire_delta=timedelta(hours=1)
-        )
-
-        return Response.success_response({
-            "access_token": access_token,
-            "user": build_jwt_payload(user_dict)
-        }, message="Login successful")
-
-    except Exception as e:
-        return Response.error_response(f"Error logging in: {str(e)}", status_code=500)
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():

@@ -1,10 +1,12 @@
 <script lang="ts" setup>
+import { ref } from "vue";
+
+const title = ref("Student");
 definePageMeta({
   layout: "teacher",
 });
-import ManagedClass from "~/views/teacher/ClassList/ManagedClass.vue";
 </script>
 
 <template>
-  <ManagedClass />
+  <div>Student</div>
 </template>

@@ -2,9 +2,8 @@
 definePageMeta({
   layout: "teacher",
 });
-import ManagedClass from "~/views/teacher/ClassList/ManagedClass.vue";
 </script>
 
 <template>
-  <ManagedClass />
+  <h1>asefsw</h1>
 </template>

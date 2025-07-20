@@ -20,11 +20,13 @@ export const useAuthStore = defineStore("auth", () => {
   }
   const login = (newToken: string, userInfo: AuthUser) => {
     console.log("Store login before remove:", userInfo);
+    console.log("Store login before remove:", token.value);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
     token.value = newToken;
     user.value = userInfo;
+    console.log(token.value);
     console.log("Store login after remove:", userInfo);
     localStorage.setItem("token", newToken);
     localStorage.setItem("user", JSON.stringify(userInfo));

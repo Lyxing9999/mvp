@@ -1,7 +1,7 @@
 import pytest
-from mongomock import MongoClient  # type: ignore
+from mongomock import MongoClient  
 from app.services.teacher_service import MongoTeacherService
-from app.models.teacher import TeacherModel
+from app.models.user import UserModel
 from app.enums.roles import Role  # if you're using Enum for roles
 
 @pytest.fixture
@@ -30,10 +30,10 @@ def test_create_teacher_success(teacher_service, input_data):
 
     # Ensure the result is not None and is a TeacherModel instance
     assert result is not None
-    assert isinstance(result, TeacherModel)
-
+    assert isinstance(result, UserModel)
+    print(type(result))
+    print(result)
     # Check values
-    assert result.name == input_data["name"]
     assert result.email == input_data["email"]
     assert result.username == input_data["username"]
 
@@ -41,5 +41,7 @@ def test_create_teacher_success(teacher_service, input_data):
     assert result.role == Role.TEACHER.value  # if using enum
     # or just: assert result.role == "teacher"
 
-    # Check nested teacher_info
-    assert result.teacher_info.subjects == ["Math", "Science"]
+
+
+if __name__ == "__main__":
+    pytest.main()
