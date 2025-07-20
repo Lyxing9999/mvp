@@ -1,0 +1,32 @@
+# ────────────── MVP/Nuxt Project ──────────────
+
+# Node modules and build output
+MVP/node_modules/
+MVP/.nuxt/
+MVP/.output/
+MVP/.nitro/
+MVP/.cache/
+MVP/.data/
+MVP/dist/
+
+# Logs
+MVP/logs/
+MVP/*.log
+
+# Environment files (ignore all but allow example)
+MVP/.env
+MVP/.env.*
+!MVP/.env.example
+
+# IDE / Editor configs
+MVP/.idea/
+MVP/.vscode/
+MVP/.fleet/
+MVP/*.sublime*
+
+# OS junk files
+MVP/.DS_Store
+MVP/Thumbs.db
+
+# Python virtual env (optional if you have one in MVP)
+MVP/.venv/
